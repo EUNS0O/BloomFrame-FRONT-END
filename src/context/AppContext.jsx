@@ -20,6 +20,7 @@ const initialData = {
     { id: nextId(), name: "IoT_2", desc: "인천에 있는 김인하의 IoT에 연결되어 있습니다" },
   ],
   aiRecommend: true,
+  iotImage: null,
   logs: [{ date: "8월 1일", statuses: ["done", "missed", "pending", "pending"] }],
 };
 
@@ -27,6 +28,7 @@ export function AppProvider({ children }) {
   const [data, setData] = useState(initialData);
   const [wip, setWip] = useState(null); // 온보딩/알림 추가 중인 카테고리
   const [onboarding, setOnboarding] = useState(true);
+  const [imageOnly, setImageOnly] = useState(false); // 마이페이지 "이미지 바꾸기" 단독 흐름 여부
 
   const update = (patch) => setData((d) => ({ ...d, ...patch }));
 
@@ -34,10 +36,11 @@ export function AppProvider({ children }) {
     setData(initialData);
     setWip(null);
     setOnboarding(true);
+    setImageOnly(false);
   };
 
   return (
-    <AppContext.Provider value={{ data, setData, update, wip, setWip, onboarding, setOnboarding, resetAll }}>
+    <AppContext.Provider value={{ data, setData, update, wip, setWip, onboarding, setOnboarding, imageOnly, setImageOnly, resetAll }}>
       {children}
     </AppContext.Provider>
   );

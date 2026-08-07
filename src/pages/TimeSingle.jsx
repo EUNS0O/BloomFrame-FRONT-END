@@ -12,7 +12,16 @@ export default function TimeSingle() {
   if (!wip) return null;
 
   const handleConfirm = () => {
-    setWip((w) => ({ ...w, times: [...w.times, { id: nextId(), ...w.draftTime }] }));
+    setWip((w) => {
+      if (w.editingTimeId) {
+        return {
+          ...w,
+          times: w.times.map((t) => (t.id === w.editingTimeId ? { ...t, ...w.draftTime } : t)),
+          editingTimeId: null,
+        };
+      }
+      return { ...w, times: [...w.times, { id: nextId(), ...w.draftTime }] };
+    });
     if (wip.type === "med") navigate("/onboarding/time-list");
     else navigate("/onboarding/image-select");
   };

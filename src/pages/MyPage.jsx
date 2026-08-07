@@ -10,11 +10,11 @@ import { BottomNav } from "../components/common/BottomNav";
 
 export default function MyPage() {
   const navigate = useNavigate();
-  const { data, update, setOnboarding, setWip, resetAll } = useApp();
+  const { data, update, setWip, setImageOnly, resetAll } = useApp();
 
   const changeImage = () => {
-    setOnboarding(false);
-    setWip({ id: nextId(), type: "other", times: [], image: null });
+    setImageOnly(true);
+    setWip({ id: nextId(), type: "other", times: [], image: data.iotImage });
     navigate("/onboarding/image-select");
   };
 

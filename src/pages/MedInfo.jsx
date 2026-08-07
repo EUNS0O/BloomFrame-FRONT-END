@@ -40,7 +40,13 @@ export default function MedInfo() {
         </div>
       ))}
       <button
-        onClick={() => setWip((w) => ({ ...w, meds: [...w.meds, { id: nextId(), name: "새 약 이름", freq: "1", timing: "식후" }] }))}
+        onClick={() => {
+          const name = prompt("약 이름을 입력해 주세요 (예: 타이레놀정 500mg)");
+          if (!name) return;
+          const freq = prompt("1일 몇 회인지 작성해 주세요 (숫자만 적어주세요)", "1") || "1";
+          const timing = prompt("언제 먹어야 하는지 작성해 주세요 (예: 기상 직후 / 식후 30분 / 아침 식후)", "") || "";
+          setWip((w) => ({ ...w, meds: [...w.meds, { id: nextId(), name, freq, timing }] }));
+        }}
         style={{ width: "100%", padding: "14px", borderRadius: 14, border: `1.5px dashed ${C.grayLine}`, background: "none", color: C.black, fontSize: 13.5, fontWeight: 700, cursor: "pointer", marginBottom: 30 }}
       >
         + 약 추가하기

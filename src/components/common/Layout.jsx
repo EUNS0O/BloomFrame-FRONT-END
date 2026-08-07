@@ -3,7 +3,7 @@ import { C } from "../../styles/tokens";
 
 export function Frame({ children }) {
   return (
-    <div style={{ background: "#DCDAD5", minHeight: 760, display: "flex", justifyContent: "center", alignItems: "flex-start", padding: 24, fontFamily: "'Pretendard','Apple SD Gothic Neo',sans-serif" }}>
+    <div style={{ background: "#DCDAD5", minHeight: 760, display: "flex", justifyContent: "center", alignItems: "flex-start", padding: 24, fontFamily: "'Pretendard Variable','Pretendard','Apple SD Gothic Neo',sans-serif" }}>
       <div style={{ width: 412, minHeight: 890, background: C.bg, borderRadius: 28, overflow: "hidden", boxShadow: "0 20px 50px rgba(0,0,0,0.18)", position: "relative", display: "flex", flexDirection: "column" }}>
         {children}
       </div>

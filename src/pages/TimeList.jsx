@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { Trash2 } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import { C } from "../styles/tokens";
 import { CATEGORY_META } from "../constants/categoryMeta";
@@ -15,7 +16,12 @@ export default function TimeList() {
   const meta = CATEGORY_META[wip.type];
 
   const addTime = () => {
-    setWip((w) => ({ ...w, draftTime: { hour: 1, minute: 0, ampm: "오전" } }));
+    setWip((w) => ({ ...w, draftTime: { hour: 1, minute: 0, ampm: "오전" }, editingTimeId: null }));
+    navigate("/onboarding/time-single");
+  };
+
+  const editTime = (t) => {
+    setWip((w) => ({ ...w, draftTime: { hour: t.hour, minute: t.minute, ampm: t.ampm }, editingTimeId: t.id }));
     navigate("/onboarding/time-single");
   };
 
@@ -35,7 +41,12 @@ export default function TimeList() {
               <div style={{ fontWeight: 700, fontSize: 15 }}>{fmtTime(t)}</div>
             </div>
           </div>
-          <button onClick={() => removeTime(t.id)} style={{ padding: "7px 14px", borderRadius: 20, border: "none", background: C.field, color: C.black, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>삭제</button>
+          <div style={{ display: "flex", gap: 6 }}>
+            <button onClick={() => editTime(t)} style={{ padding: "7px 14px", borderRadius: 20, border: "none", background: C.black, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>수정</button>
+            <button onClick={() => removeTime(t.id)} aria-label="삭제" style={{ width: 30, height: 30, borderRadius: "50%", border: "none", background: C.field, color: C.black, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+              <Trash2 size={13} />
+            </button>
+          </div>
         </div>
       ))}
       <button onClick={addTime} style={{ width: "100%", padding: "14px", borderRadius: 14, border: `1.5px dashed ${C.grayLine}`, background: "none", color: C.black, fontSize: 13.5, fontWeight: 700, cursor: "pointer", marginBottom: 30 }}>
