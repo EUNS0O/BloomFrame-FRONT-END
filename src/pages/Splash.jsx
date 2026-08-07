@@ -48,7 +48,7 @@ export default function Splash() {
       </div>
 
       {/* 로고 + 태그라인: 클로버 바로 아래, 붙여서 배치 */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 20 }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 16 }}>
         <div style={{ position: "relative", width: LOGO_DISPLAY_WIDTH, height: LOGO_DISPLAY_HEIGHT, overflow: "hidden" }}>
           <img
             src={logoWhite}
@@ -56,7 +56,7 @@ export default function Splash() {
             style={{ position: "absolute", top: LOGO_SHIFT_TOP, left: LOGO_SHIFT_LEFT, width: LOGO_IMG_FULL, height: "auto" }}
           />
         </div>
-        <div style={{ fontSize: 18, color: "#C9C7C2", marginTop: 10, fontWeight: 300 }}>예술로 피어나는 습관</div>
+        <div style={{ fontSize: 14, color: "#C9C7C2", marginTop: 6, fontWeight: 500 }}>예술로 피어나는 습관</div>
       </div>
 
       <div style={{ flex: 1 }} />

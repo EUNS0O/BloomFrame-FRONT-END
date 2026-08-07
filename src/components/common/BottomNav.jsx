@@ -1,31 +1,32 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Wifi, Home as HomeIcon, Image as ImageIcon } from "lucide-react";
 import { C } from "../../styles/tokens";
+import iotMark from "../../assets/IoT_mark.png";
+import homeMark from "../../assets/home_mark.png";
+import myPageMark from "../../assets/myPage_mark.png";
 
 const TABS = [
-  { key: "iot", label: "IoT", icon: Wifi, path: "/iot" },
-  { key: "home", label: "홈", icon: HomeIcon, path: "/home" },
-  { key: "mypage", label: "마이페이지", icon: ImageIcon, path: "/mypage" },
+  { key: "iot", label: "IoT", icon: iotMark, path: "/iot" },
+  { key: "home", label: "홈", icon: homeMark, path: "/home" },
+  { key: "mypage", label: "마이페이지", icon: myPageMark, path: "/mypage" },
 ];
 
-export function BottomNav() {
+export function BottomNav({ interactive = true }) {
   const navigate = useNavigate();
   const location = useLocation();
 
   return (
     <div style={{ borderTop: `1px solid ${C.grayLine}`, background: C.bg, display: "flex", padding: "10px 0 16px" }}>
       {TABS.map((tab) => {
-        const Icon = tab.icon;
         const active = location.pathname.startsWith(tab.path);
         return (
           <button
             key={tab.key}
-            onClick={() => navigate(tab.path)}
-            style={{ flex: 1, background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, color: active ? C.black : C.gray }}
+            onClick={interactive ? () => navigate(tab.path) : undefined}
+            style={{ flex: 1, background: "none", border: "none", cursor: interactive ? "pointer" : "default", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}
           >
-            <Icon size={20} />
-            <span style={{ fontSize: 11, fontWeight: active ? 700 : 500 }}>{tab.label}</span>
+            <img src={tab.icon} alt="" style={{ height: 20, width: "auto", opacity: active ? 1 : 0.4 }} />
+            <span style={{ fontSize: 11, fontWeight: active ? 700 : 500, color: active ? C.black : C.gray }}>{tab.label}</span>
           </button>
         );
       })}

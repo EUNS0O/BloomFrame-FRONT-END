@@ -2,7 +2,7 @@ export const C = {
   bg: "#F3F3F3",
   panel: "#FFFFFF",
   field: "#EBEAE7",
-  black: "#17171A",
+  black: "#000000",
   orange: "#FF6A34",
   orangeSoft: "#FFE3D6",
   gray: "#9A9993",
