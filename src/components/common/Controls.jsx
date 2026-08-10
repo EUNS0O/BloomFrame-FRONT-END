@@ -29,10 +29,10 @@ export function Btn({ children, onClick, variant = "primary", disabled, icon: Ic
   );
 }
 
-export function Field({ label, textColor, placeholderColor, bg, borderColor, width, ...props }) {
+export function Field({ label, textColor, placeholderColor, bg, borderColor, width, marginBottom, ...props }) {
   const uid = React.useId().replace(/:/g, "");
   return (
-    <div style={{ marginTop: 20, marginBottom: 5 }}>
+    <div style={{ marginTop: 20, marginBottom: marginBottom ?? 5 }}>
       {label && <div style={{ fontSize: 16, fontWeight: 700, color: C.black, marginBottom: 5, paddingLeft: 8 }}>{label}</div>}
       {placeholderColor && (
         <style>{`.f-${uid}::placeholder { color: ${placeholderColor}; }`}</style>
