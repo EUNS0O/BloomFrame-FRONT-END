@@ -9,6 +9,7 @@ import SignupInfo from "./pages/SignupInfo";
 import CategorySelect from "./pages/CategorySelect";
 import MedPhoto from "./pages/MedPhoto";
 import MedInfo from "./pages/MedInfo";
+import MedEdit from "./pages/MedEdit";
 import TimeList from "./pages/TimeList";
 import TimeSingle from "./pages/TimeSingle";
 import ImageSelect from "./pages/ImageSelect";
@@ -38,6 +39,7 @@ export default function App() {
         <Route path="/onboarding/category/more" element={<CategorySelect />} />
         <Route path="/onboarding/med-photo" element={<MedPhoto />} />
         <Route path="/onboarding/med-info" element={<MedInfo />} />
+        <Route path="/onboarding/med-edit" element={<MedEdit />} />
         <Route path="/onboarding/time-list" element={<TimeList />} />
         <Route path="/onboarding/time-single" element={<TimeSingle />} />
         <Route path="/onboarding/image-select" element={<ImageSelect />} />

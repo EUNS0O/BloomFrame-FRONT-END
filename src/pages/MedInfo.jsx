@@ -2,7 +2,6 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import { C } from "../styles/tokens";
-import { nextId } from "../utils/format";
 import { BackHeader } from "../components/common/BackHeader";
 import { Btn } from "../components/common/Controls";
 import medicineIconBlack from "../assets/medicine_icon_black.png";
@@ -13,11 +12,9 @@ export default function MedInfo() {
 
   if (!wip) return null;
 
-  const editMed = (m) => {
-    const name = prompt("약 이름", m.name) || m.name;
-    const freq = prompt("1일 몇 회인지 (숫자만)", m.freq) || m.freq;
-    const timing = prompt("언제 먹어야 하는지", m.timing) || m.timing;
-    setWip((w) => ({ ...w, meds: w.meds.map((x) => (x.id === m.id ? { ...x, name, freq, timing } : x)) }));
+  const goEdit = (medId) => {
+    setWip((w) => ({ ...w, editingMedId: medId }));
+    navigate("/onboarding/med-edit");
   };
 
   return (
@@ -44,20 +41,14 @@ export default function MedInfo() {
               <div style={{ fontSize: 12.5, color: C.black, marginTop: 2 }}>1일 {m.freq}회 · {m.timing}</div>
             </div>
           </div>
-          <button onClick={() => editMed(m)} style={{ padding: "5px 12px", borderRadius: 20, border: "none", background: C.black, color: "#fff", fontSize: 11, fontWeight: 400, cursor: "pointer" }}>
+          <button onClick={() => goEdit(m.id)} style={{ padding: "5px 12px", borderRadius: 20, border: "none", background: C.black, color: "#fff", fontSize: 11, fontWeight: 400, cursor: "pointer" }}>
             수정
           </button>
         </div>
       ))}
 
       <button
-        onClick={() => {
-          const name = prompt("약 이름을 입력해 주세요 (예: 타이레놀정 500mg)");
-          if (!name) return;
-          const freq = prompt("1일 몇 회인지 작성해 주세요 (숫자만 적어주세요)", "1") || "1";
-          const timing = prompt("언제 먹어야 하는지 작성해 주세요 (예: 기상 직후 / 식후 30분 / 아침 식후)", "") || "";
-          setWip((w) => ({ ...w, meds: [...w.meds, { id: nextId(), name, freq, timing }] }));
-        }}
+        onClick={() => goEdit(null)}
         style={{ width: "100%", padding: "14px", borderRadius: 22, border: `1.5px dashed ${C.black}`, background: "none", color: C.black, fontSize: 13.5, fontWeight: 700, cursor: "pointer", marginBottom: 40 }}
       >
         + 약 추가하기
