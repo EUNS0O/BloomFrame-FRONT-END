@@ -1,10 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Camera } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import { C } from "../styles/tokens";
 import { nextId } from "../utils/format";
 import { BackHeader } from "../components/common/BackHeader";
+import cameraIcon from "../assets/camera_icon.png";
+
+// ── 조절용 상수 ──────────────────────────────
+const VIEWFINDER_WIDTH = "80%"; // 검은 네모 크기 (줄이면 더 작아짐)
+const VIEWFINDER_MARGIN_TOP = 70; // 제목-네모 사이 여백 (키우면 더 아래로)
+// ─────────────────────────────────────────────
 
 export default function MedPhoto() {
   const navigate = useNavigate();
@@ -25,31 +30,31 @@ export default function MedPhoto() {
   };
 
   return (
-    <div style={{ flex: 1, padding: "0 24px 24px" }}>
-      <BackHeader progress={onboarding ? 70 : undefined} />
-      <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 6 }}>약봉지 촬영</div>
+    <div style={{ flex: 1, padding: "0 30px 30px" }}>
+      <BackHeader progress={onboarding ? 70 : undefined} hideBack />
+      <div style={{ fontSize: 24, fontWeight: 800, marginTop: 40, marginBottom: 10, paddingLeft: 12 }}>약봉지 촬영</div>
       <div
         onClick={handleCapture}
         style={{
-          width: "100%", aspectRatio: "1", background: C.black, borderRadius: 20, marginTop: 40,
+          width: VIEWFINDER_WIDTH, aspectRatio: "1", background: C.black, borderRadius: 10, margin: `${VIEWFINDER_MARGIN_TOP}px auto 0`,
           display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
           cursor: "pointer", color: "#fff", position: "relative",
         }}
       >
-        <div style={{ position: "absolute", top: 24, left: 24, width: 26, height: 26, borderTop: "3px solid #fff", borderLeft: "3px solid #fff" }} />
-        <div style={{ position: "absolute", top: 24, right: 24, width: 26, height: 26, borderTop: "3px solid #fff", borderRight: "3px solid #fff" }} />
-        <div style={{ position: "absolute", bottom: 24, left: 24, width: 26, height: 26, borderBottom: "3px solid #fff", borderLeft: "3px solid #fff" }} />
-        <div style={{ position: "absolute", bottom: 24, right: 24, width: 26, height: 26, borderBottom: "3px solid #fff", borderRight: "3px solid #fff" }} />
-        {analyzing ? <div style={{ fontSize: 13 }}>AI가 분석하고 있어요...</div> : <Camera size={40} />}
+        <div style={{ position: "absolute", top: 24, left: 24, width: 26, height: 26, borderTop: "5px solid #fff", borderLeft: "5px solid #fff" }} />
+        <div style={{ position: "absolute", top: 24, right: 24, width: 26, height: 26, borderTop: "5px solid #fff", borderRight: "5px solid #fff" }} />
+        <div style={{ position: "absolute", bottom: 24, left: 24, width: 26, height: 26, borderBottom: "5px solid #fff", borderLeft: "5px solid #fff" }} />
+        <div style={{ position: "absolute", bottom: 24, right: 24, width: 26, height: 26, borderBottom: "5px solid #fff", borderRight: "5px solid #fff" }} />
+        {analyzing && <div style={{ fontSize: 13 }}>AI가 분석하고 있어요...</div>}
       </div>
-      <div style={{ textAlign: "center", fontSize: 13, color: C.gray, margin: "14px 0 30px" }}>약국 봉지 뒷면이나 약을 찍어주세요</div>
+      <div style={{ textAlign: "center", fontSize: 15, color: C.gray, margin: "18px 0 65px" }}>약국 봉지 뒷면이나 약을 찍어주세요</div>
       <div style={{ display: "flex", justifyContent: "center" }}>
-        <button
+        <img
+          src={cameraIcon}
+          alt="촬영"
           onClick={handleCapture}
-          style={{ width: 64, height: 64, borderRadius: "50%", background: C.orange, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
-        >
-          <Camera size={26} color="#fff" />
-        </button>
+          style={{ width: 90, height: 90, cursor: "pointer" }}
+        />
       </div>
     </div>
   );
