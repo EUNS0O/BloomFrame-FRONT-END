@@ -1,11 +1,11 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Pill } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import { C } from "../styles/tokens";
 import { nextId } from "../utils/format";
-import { BackHeader, Sub } from "../components/common/BackHeader";
+import { BackHeader } from "../components/common/BackHeader";
 import { Btn } from "../components/common/Controls";
+import medicineIconBlack from "../assets/medicine_icon_black.png";
 
 export default function MedInfo() {
   const navigate = useNavigate();
@@ -21,24 +21,35 @@ export default function MedInfo() {
   };
 
   return (
-    <div style={{ flex: 1, padding: "0 24px 24px", overflowY: "auto" }}>
-      <BackHeader progress={onboarding ? 75 : undefined} />
-      <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 6 }}>약 정보</div>
-      <Sub>AI가 인식한 약 정보에요<br />확인 후 필요하면 수정해 주세요</Sub>
+    <div style={{ flex: 1, padding: "0 30px 90px", overflowY: "auto", display: "flex", flexDirection: "column" }}>
+      <BackHeader progress={onboarding ? 75 : undefined} hideBack />
+      <div style={{ fontSize: 24, fontWeight: 800, marginTop: 40, marginBottom: 10, paddingLeft: 12 }}>약 정보</div>
+      <div style={{ fontSize: 15, color: C.gray, lineHeight: 1.6, marginBottom: 28, paddingLeft: 12, fontWeight: 500, paddingBottom: 15 }}>
+        AI가 인식한 약 정보에요<br />확인 후 필요하면 수정해 주세요
+      </div>
+
       {wip.meds.map((m) => (
-        <div key={m.id} style={{ background: C.field, borderRadius: 16, padding: "14px 16px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div
+          key={m.id}
+          style={{
+            background: C.bg, border: "1px solid #000000", borderRadius: 10,
+            height: 95, boxSizing: "border-box", padding: "25px 15px 25px 28px",
+            marginBottom: 22, display: "flex", alignItems: "center", justifyContent: "space-between",
+          }}
+        >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}><Pill size={16} /></div>
+            <img src={medicineIconBlack} alt="" style={{ width: 50, height: 50, flexShrink: 0 }} />
             <div>
-              <div style={{ fontWeight: 700, fontSize: 14 }}>{m.name}</div>
-              <div style={{ fontSize: 12, color: C.gray }}>1일 {m.freq}회 · {m.timing}</div>
+              <div style={{ fontWeight: 700, fontSize: 15, color: C.black }}>{m.name}</div>
+              <div style={{ fontSize: 12.5, color: C.black, marginTop: 2 }}>1일 {m.freq}회 · {m.timing}</div>
             </div>
           </div>
-          <button onClick={() => editMed(m)} style={{ padding: "7px 14px", borderRadius: 20, border: "none", background: C.black, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+          <button onClick={() => editMed(m)} style={{ padding: "5px 12px", borderRadius: 20, border: "none", background: C.black, color: "#fff", fontSize: 11, fontWeight: 400, cursor: "pointer" }}>
             수정
           </button>
         </div>
       ))}
+
       <button
         onClick={() => {
           const name = prompt("약 이름을 입력해 주세요 (예: 타이레놀정 500mg)");
@@ -47,11 +58,16 @@ export default function MedInfo() {
           const timing = prompt("언제 먹어야 하는지 작성해 주세요 (예: 기상 직후 / 식후 30분 / 아침 식후)", "") || "";
           setWip((w) => ({ ...w, meds: [...w.meds, { id: nextId(), name, freq, timing }] }));
         }}
-        style={{ width: "100%", padding: "14px", borderRadius: 14, border: `1.5px dashed ${C.grayLine}`, background: "none", color: C.black, fontSize: 13.5, fontWeight: 700, cursor: "pointer", marginBottom: 30 }}
+        style={{ width: "100%", padding: "14px", borderRadius: 22, border: `1.5px dashed ${C.black}`, background: "none", color: C.black, fontSize: 13.5, fontWeight: 700, cursor: "pointer", marginBottom: 40 }}
       >
         + 약 추가하기
       </button>
-      <Btn onClick={() => navigate("/onboarding/time-list")}>확인</Btn>
+
+      <div style={{ flex: 1 }} />
+
+      <div style={{ width: 170, margin: "0 auto" }}>
+        <Btn onClick={() => navigate("/onboarding/time-list")} padding="10px 14px">확인</Btn>
+      </div>
     </div>
   );
 }
