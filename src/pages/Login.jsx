@@ -4,6 +4,7 @@ import { C } from "../styles/tokens";
 import { TopBar } from "../components/common/Layout";
 import { Btn, Field } from "../components/common/Controls";
 import { BottomNav } from "../components/common/BottomNav";
+import { BottomButton } from "../components/common/BottomButton";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -29,11 +30,9 @@ export default function Login() {
           width="95%"
         />
 
-        <div style={{ flex: 1 }} />
-
-        <div style={{ width: 170, margin: "0 auto 130px" }}>
+        <BottomButton variant="high">
           <Btn onClick={() => navigate("/home")} padding="10px 14px">확인</Btn>
-        </div>
+        </BottomButton>
       </div>
       <BottomNav interactive={false} />
     </>
