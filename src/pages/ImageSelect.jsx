@@ -1,9 +1,11 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
+import { C } from "../styles/tokens";
 import { TopBar } from "../components/common/Layout";
-import { BackHeader, Sub } from "../components/common/BackHeader";
+import { BackHeader } from "../components/common/BackHeader";
 import { Btn } from "../components/common/Controls";
+import { BottomButton } from "../components/common/BottomButton";
 import { ImageGrid } from "../components/widgets/ImageGrid";
 import { BottomNav } from "../components/common/BottomNav";
 
@@ -24,12 +26,16 @@ export default function ImageSelect() {
     return (
       <>
         <TopBar />
-        <div style={{ flex: 1, padding: "20px 24px", overflowY: "auto" }}>
-          <BackHeader onBack={() => { setWip(null); setImageOnly(false); navigate(-1); }} />
-          <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 6 }}>이미지 선택</div>
-          <Sub>IoT 스크린에 들어갈 이미지를 선택해 주세요</Sub>
+        <div style={{ flex: 1, padding: "0 30px 100px", overflowY: "auto" }}>
+          <BackHeader hideBack />
+          <div style={{ fontSize: 24, fontWeight: 800, marginTop: 40, marginBottom: 10, paddingLeft: 12 }}>이미지 선택</div>
+          <div style={{ fontSize: 15, color: C.gray, lineHeight: 1.6, paddingLeft: 12, fontWeight: 500 }}>
+            IoT 스크린에 들어갈 이미지를 선택해 주세요
+          </div>
           <ImageGrid selected={wip.image} onSelect={(i) => setWip((w) => ({ ...w, image: i }))} />
-          <Btn disabled={wip.image == null} onClick={confirmImageOnly}>확인</Btn>
+          <BottomButton>
+            <Btn disabled={wip.image == null} onClick={confirmImageOnly} padding="10px 14px">확인</Btn>
+          </BottomButton>
         </div>
         <BottomNav />
       </>
@@ -45,12 +51,16 @@ export default function ImageSelect() {
   };
 
   return (
-    <div style={{ flex: 1, padding: "0 24px 24px", overflowY: "auto" }}>
-      <BackHeader progress={onboarding ? 92 : undefined} />
-      <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 6 }}>이미지 선택</div>
-      <Sub>IoT 스크린에 들어갈 이미지를 선택해 주세요</Sub>
+    <div style={{ flex: 1, padding: "0 30px 100px", overflowY: "auto" }}>
+      <BackHeader progress={onboarding ? 100 : undefined} hideBack />
+      <div style={{ fontSize: 24, fontWeight: 800, marginTop: 40, marginBottom: 10, paddingLeft: 12 }}>이미지 선택</div>
+      <div style={{ fontSize: 15, color: C.gray, lineHeight: 1.6, paddingLeft: 12, fontWeight: 500 }}>
+        IoT 스크린에 들어갈 이미지를 선택해 주세요
+      </div>
       <ImageGrid selected={wip.image} onSelect={(i) => setWip((w) => ({ ...w, image: i }))} />
-      <Btn disabled={wip.image == null} onClick={finishCategory}>확인</Btn>
+      <BottomButton>
+        <Btn disabled={wip.image == null} onClick={finishCategory} padding="10px 14px">확인</Btn>
+      </BottomButton>
     </div>
   );
 }
