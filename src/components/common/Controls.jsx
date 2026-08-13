@@ -55,14 +55,15 @@ export function Field({ label, textColor, placeholderColor, bg, borderColor, wid
   );
 }
 
-export function Card({ children, onClick, active }) {
+export function Card({ children, onClick, active, borderRadius = 16, padding = "16px 18px", width = "100%", marginBottom = 12 }) {
   return (
     <div
       onClick={onClick}
       style={{
         background: active ? C.orange : C.field, color: active ? "#fff" : C.black,
-        borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center",
-        justifyContent: "space-between", cursor: onClick ? "pointer" : "default", marginBottom: 12,
+        borderRadius, padding, width, margin: `0 auto ${marginBottom}px`, boxSizing: "border-box",
+        display: "flex", alignItems: "center",
+        justifyContent: "space-between", cursor: onClick ? "pointer" : "default",
       }}
     >
       {children}
