@@ -4,6 +4,7 @@ import { C } from "../styles/tokens";
 import { useApp } from "../context/AppContext";
 import { BackHeader } from "../components/common/BackHeader";
 import { Btn, Field } from "../components/common/Controls";
+import { BottomButton } from "../components/common/BottomButton";
 
 const FIELD_MB = 22; // 필드 사이 간격 (조절용)
 
@@ -29,7 +30,7 @@ export default function SignupInfo() {
   const showPhoneVerifyButton = phoneFocused && !data.phoneVerifying;
 
   return (
-    <div style={{ flex: 1, padding: "0 24px 24px", overflowY: "auto" }}>
+    <div style={{ flex: 1, padding: "0 24px 100px", overflowY: "auto" }}>
       <BackHeader progress={40} hideBack />
       <div style={{ fontSize: 24, fontWeight: 800, marginTop: 20, marginBottom: 8 }}>회원 정보 입력</div>
       <div style={{ fontSize: 13.5, color: C.gray, lineHeight: 1.6, marginBottom: 32 }}>
@@ -68,9 +69,9 @@ export default function SignupInfo() {
       <Field label="비밀번호" type="password" placeholder="••••••••" value={data.password} onChange={(e) => update({ password: e.target.value })} {...fieldProps} />
       <Field label="비밀번호 확인" type="password" placeholder="••••••••" value={data.passwordConfirm} onChange={(e) => update({ passwordConfirm: e.target.value })} {...fieldProps} marginBottom={32} />
 
-      <div style={{ width: 170, margin: "0 auto" }}>
+      <BottomButton>
         <Btn onClick={startOnboardingCategoryFlow} padding="10px 14px">확인</Btn>
-      </div>
+      </BottomButton>
     </div>
   );
 }

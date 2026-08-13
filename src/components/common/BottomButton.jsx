@@ -7,7 +7,7 @@ import React from "react";
 // - "low"  : 회원 정보 입력 / 약 정보 / 알림·복용 시간 설정 등 대부분의 화면
 // - "high" : 로그인(하단 탭바가 있는 화면), 알람 설정(시간 선택) 등 더 위쪽에 오는 화면
 export const BOTTOM_OFFSET = {
-  low: 40,
+  low: 55,
   high: 170,
 };
 
