@@ -4,6 +4,7 @@ import { useApp } from "../context/AppContext";
 import { C } from "../styles/tokens";
 import { BackHeader } from "../components/common/BackHeader";
 import { Btn } from "../components/common/Controls";
+import { BottomButton } from "../components/common/BottomButton";
 import medicineIconBlack from "../assets/medicine_icon_black.png";
 
 export default function MedInfo() {
@@ -18,7 +19,7 @@ export default function MedInfo() {
   };
 
   return (
-    <div style={{ flex: 1, padding: "0 30px 90px", overflowY: "auto", display: "flex", flexDirection: "column" }}>
+    <div style={{ flex: 1, padding: "0 30px 100px", overflowY: "auto", display: "flex", flexDirection: "column" }}>
       <BackHeader progress={onboarding ? 75 : undefined} hideBack />
       <div style={{ fontSize: 24, fontWeight: 800, marginTop: 40, marginBottom: 10, paddingLeft: 12 }}>약 정보</div>
       <div style={{ fontSize: 15, color: C.gray, lineHeight: 1.6, marginBottom: 28, paddingLeft: 12, fontWeight: 500, paddingBottom: 15 }}>
@@ -54,11 +55,9 @@ export default function MedInfo() {
         + 약 추가하기
       </button>
 
-      <div style={{ flex: 1 }} />
-
-      <div style={{ width: 170, margin: "0 auto" }}>
+      <BottomButton>
         <Btn onClick={() => navigate("/onboarding/time-list")} padding="10px 14px">확인</Btn>
-      </div>
+      </BottomButton>
     </div>
   );
 }
