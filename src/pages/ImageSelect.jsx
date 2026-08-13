@@ -42,9 +42,15 @@ export default function ImageSelect() {
     );
   }
 
-  // 온보딩 / 알림 카테고리 추가 흐름
+  // 온보딩 / 알림 카테고리 추가 / 알림 목록에서 수정 흐름
   const finishCategory = () => {
-    setData((d) => ({ ...d, categories: [...d.categories, wip] }));
+    setData((d) => {
+      const isEditing = d.categories.some((c) => c.id === wip.id);
+      const categories = isEditing
+        ? d.categories.map((c) => (c.id === wip.id ? wip : c)) // 기존 항목 수정: 덮어쓰기
+        : [...d.categories, wip]; // 새 항목: 추가
+      return { ...d, categories };
+    });
     setWip(null);
     if (onboarding) navigate("/onboarding/category/more");
     else navigate("/home");

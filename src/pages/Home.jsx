@@ -55,7 +55,7 @@ export default function Home() {
       <TopBar />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
         <div style={{ padding: "40px 35px 0" }}>
-          <div style={{ fontSize: 30, fontWeight: 800, marginBottom: 48 }}>홈</div>
+          <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 48 }}>홈</div>
           <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 20 }}>알림 기록</div>
 
           {/* 아이콘이 많아지면 가로 스크롤 되도록 wrapper 분리 (프레임 밖으로 잘리지 않게) */}
