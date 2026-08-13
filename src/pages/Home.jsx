@@ -21,6 +21,7 @@ const LABEL = { med: "약", exercise: "운동", other: "기타" };
 export default function Home() {
   const navigate = useNavigate();
   const { data, setOnboarding, setWip } = useApp();
+  const scrollId = React.useId().replace(/:/g, "");
 
   const startAddAlarm = () => {
     setOnboarding(false);
@@ -57,21 +58,32 @@ export default function Home() {
           <div style={{ fontSize: 30, fontWeight: 800, marginBottom: 48 }}>홈</div>
           <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 20 }}>알림 기록</div>
 
-          {/* 아이콘 사이(오른쪽 끝~다음 아이콘 왼쪽 끝) 구간만 잇는 회색 연결선 */}
-          <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 42, marginLeft: 22,marginBottom: 14, width: "max-content" }}>
-            {iconData.length > 1 && (
-              <div style={{ position: "absolute", left: 40, right: 40, top: "50%", transform: "translateY(-50%)", height: 1, background: C.grayLine, zIndex: 0 }} />
-            )}
-            {iconData.map((d, i) => {
-              let icon;
-              if (d.status === "done") icon = medicineIconGreen;
-              else if (d.status === "missed") icon = medicineIconRed;
-              else icon = PENDING_ICON[d.type] || medicineIconSmall;
-              return <img key={i} src={icon} alt="" style={{ width: 40, height: 40, position: "relative", zIndex: 1, display: "block" }} />;
-            })}
+          {/* 아이콘이 많아지면 가로 스크롤 되도록 wrapper 분리 (프레임 밖으로 잘리지 않게) */}
+          <style>{`
+            .hscroll-${scrollId} { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+            .hscroll-${scrollId}:hover { scrollbar-color: ${C.grayLine} transparent; }
+            .hscroll-${scrollId}::-webkit-scrollbar { height: 3px; }
+            .hscroll-${scrollId}::-webkit-scrollbar-track { background: transparent; }
+            .hscroll-${scrollId}::-webkit-scrollbar-thumb { background: transparent; border-radius: 4px; }
+            .hscroll-${scrollId}:hover::-webkit-scrollbar-thumb { background: ${C.grayLine}; }
+          `}</style>
+          <div className={`hscroll-${scrollId}`} style={{ overflowX: "auto", marginBottom: 14 }}>
+            {/* 아이콘 사이(오른쪽 끝~다음 아이콘 왼쪽 끝) 구간만 잇는 회색 연결선 */}
+            <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 42, marginLeft: 22, width: "max-content" }}>
+              {iconData.length > 1 && (
+                <div style={{ position: "absolute", left: 40, right: 40, top: "50%", transform: "translateY(-50%)", height: 1, background: C.grayLine, zIndex: 0 }} />
+              )}
+              {iconData.map((d, i) => {
+                let icon;
+                if (d.status === "done") icon = medicineIconGreen;
+                else if (d.status === "missed") icon = medicineIconRed;
+                else icon = PENDING_ICON[d.type] || medicineIconSmall;
+                return <img key={i} src={icon} alt="" style={{ width: 40, height: 40, position: "relative", zIndex: 1, display: "block", flexShrink: 0 }} />;
+              })}
+            </div>
           </div>
 
-          <div style={{ textAlign: "right", fontSize: 12, color: C.gray, cursor: "pointer", marginBottom: 80 }} onClick={() => navigate("/home/history")}>
+          <div style={{ textAlign: "right", fontSize: 12, color: C.gray, cursor: "pointer", marginBottom: 65 }} onClick={() => navigate("/home/history")}>
             이전 기록 보기 &gt;
           </div>
           <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 10 }}>알림 목록</div>
