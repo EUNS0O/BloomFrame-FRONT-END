@@ -70,7 +70,7 @@ export function TimePicker({ value, onChange }) {
           {["오전", "오후"].map((ap) => (
             <button key={ap} onClick={() => set("ampm", ap)}
               style={{ padding: "11px 13px", border: "none", cursor: "pointer",
-                background: value.ampm === ap ? C.black : "#fff", color: value.ampm === ap ? "#fff" : C.black, fontSize: 12, fontWeight: 500 }}>
+                background: value.ampm === ap ? C.black : "#F3F3F3", color: value.ampm === ap ? "#fff" : C.black, fontSize: 12, fontWeight: 500 }}>
               {ap}
             </button>
           ))}
