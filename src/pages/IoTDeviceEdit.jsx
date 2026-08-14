@@ -1,24 +1,28 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import { C } from "../styles/tokens";
-import { nextId } from "../utils/format";
 import { TopBar } from "../components/common/Layout";
 import { Btn } from "../components/common/Controls";
 import { BottomButton } from "../components/common/BottomButton";
 import { BottomNav } from "../components/common/BottomNav";
 
-export default function IotConnect() {
+export default function IotDeviceEdit() {
   const navigate = useNavigate();
-  const { setData } = useApp();
-  const [code, setCode] = useState("");
+  const { id } = useParams();
+  const { data, setData } = useApp();
+  const device = data.devices.find((d) => String(d.id) === id);
+
+  const [name, setName] = useState("");
+
+  if (!device) return null;
 
   const handleConfirm = () => {
     setData((d) => ({
       ...d,
-      devices: [...d.devices, { id: nextId(), name: `IoT_${d.devices.length + 1}`, desc: `${code} IoT에 연결되어 있습니다` }],
+      devices: d.devices.map((x) => (String(x.id) === id ? { ...x, name: name || device.name } : x)),
     }));
-    setCode("");
+    setName("");
     navigate(-1);
   };
 
@@ -28,15 +32,28 @@ export default function IotConnect() {
       <div style={{ flex: 1, padding: "40px 35px 100px", overflowY: "auto" }}>
         <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 16 }}>IoT 기기 수정</div>
         <div style={{ fontSize: 17, color: C.gray, lineHeight: 1.6, marginBottom: 40, fontWeight: 500 }}>
-          IoT 기기의 수정할 이름을<br />써주세요
+          IoT 기기의 수정할 이름을
+          <br />
+          써주세요
         </div>
         <input
-          autoFocus value={code} onChange={(e) => setCode(e.target.value)}
-          style={{ width: "100%", boxSizing: "border-box", padding: "14px", borderRadius: 5, border: `1px solid ${C.grayLine}`, background: C.bg, fontSize: 15 }}
+          autoFocus
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder={device.name}
+          style={{
+            width: "100%",
+            boxSizing: "border-box",
+            padding: "14px",
+            borderRadius: 5,
+            border: `1px solid ${C.grayLine}`,
+            background: C.bg,
+            fontSize: 15,
+          }}
         />
 
         <BottomButton variant="high">
-          <Btn disabled={!code} onClick={handleConfirm}>확인</Btn>
+          <Btn onClick={handleConfirm}>확인</Btn>
         </BottomButton>
       </div>
       <BottomNav />
