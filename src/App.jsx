@@ -25,7 +25,11 @@ import MedList from "./pages/MedList";
 import Guide from "./pages/Guide";
 import Inquiry from "./pages/Inquiry";
 
-export default function App() {
+// 태블릿에서 "액자"로 켜둘 화면 — 폰 목업(Frame) 밖에서 전체화면으로 렌더링됨
+import IotDisplay from "./pages/IotDisplay";
+
+// 지금까지 만든 폰 앱 전체 (온보딩, 홈, 마이페이지 등) — Frame(폰 목업)으로 감싸서 보여줌
+function PhoneApp() {
   return (
     <Frame>
       <Routes>
@@ -35,7 +39,6 @@ export default function App() {
         <Route path="/signup/type" element={<SignupType />} />
         <Route path="/signup/info" element={<SignupInfo />} />
 
-        {/* 알림 카테고리 등록 흐름 (온보딩 중 + 홈에서 알람 추가 시 공용) */}
         <Route path="/onboarding/category" element={<CategorySelect />} />
         <Route path="/onboarding/category/more" element={<CategorySelect />} />
         <Route path="/onboarding/med-photo" element={<MedPhoto />} />
@@ -63,5 +66,16 @@ export default function App() {
         <Route path="*" element={<Splash />} />
       </Routes>
     </Frame>
+  );
+}
+
+export default function App() {
+  return (
+    <Routes>
+      {/* 태블릿 액자용 — Frame 없이 전체화면 */}
+      <Route path="/display/:deviceId" element={<IotDisplay />} />
+      {/* 그 외 전부 폰 앱 */}
+      <Route path="/*" element={<PhoneApp />} />
+    </Routes>
   );
 }

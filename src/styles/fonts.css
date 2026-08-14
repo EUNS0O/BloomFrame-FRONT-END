@@ -1,0 +1,45 @@
+/* KERIS 케듀체 — IoT 디스플레이의 시계(시:분) 전용 폰트 */
+@font-face {
+  font-family: "KERISKEDU";
+  src: url("../assets/fonts/KERISKEDU_R.otf") format("opentype");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "KERISKEDU";
+  src: url("../assets/fonts/KERISKEDU_B.otf") format("opentype");
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "KERISKEDU";
+  src: url("../assets/fonts/KERISKEDU_Line.otf") format("opentype");
+  font-weight: 200;
+  font-display: swap;
+}
+
+/* 나눔스퀘어라운드 — 시계를 제외한 나머지 텍스트 전반 */
+@font-face {
+  font-family: "NanumSquareRound";
+  src: url("../assets/fonts/NanumSquareRoundOTFL.otf") format("opentype");
+  font-weight: 300;
+  font-display: swap;
+}
+@font-face {
+  font-family: "NanumSquareRound";
+  src: url("../assets/fonts/NanumSquareRoundOTFR.otf") format("opentype");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "NanumSquareRound";
+  src: url("../assets/fonts/NanumSquareRoundOTFB.otf") format("opentype");
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "NanumSquareRound";
+  src: url("../assets/fonts/NanumSquareRoundOTFEB.otf") format("opentype");
+  font-weight: 800;
+  font-display: swap;
+}
