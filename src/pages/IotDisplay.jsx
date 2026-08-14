@@ -25,11 +25,11 @@ const CARD_ICON = {
 };
 const CARD_LABEL = { med: "약", exercise: "운동", other: "기타" };
 const STATE_STYLE = {
-  pending_med: { bg: "#FBF0DA", accent: "#E0A82E" },
-  pending_exercise: { bg: "#DCEEFB", accent: "#4EA1E0" },
-  pending_other: { bg: "#EAE7E2", accent: "#8A8A8A" },
-  success: { bg: "#DCEEDD", accent: "#3CAE6B" },
-  missed: { bg: "#FBD9D9", accent: "#E05353" },
+  pending_med: { bg: "#FFF2D7BF", accent: "#E0A82E" },
+  pending_exercise: { bg: "#C8E8FF99", accent: "#4EA1E0" },
+  pending_other: { bg: "#EAE7E2CC", accent: "#8A8A8A" },
+  success: { bg: "#D6EFD3CC", accent: "#3CAE6B" },
+  missed: { bg: "#FFD4D3CC", accent: "#E05353" },
 };
 
 const MOCK_NEWSLETTER = `안녕하세요 김인하님!
@@ -311,22 +311,22 @@ export default function IotDisplay() {
           `}</style>
           <div
             className={`cards-scroll-${scrollId}`}
-            style={{ position: "absolute", left: 0, right: 0, bottom: 32, zIndex: Z.cards, display: "flex", gap: 14, overflowX: "auto", padding: "0 32px" }}
+            style={{ position: "absolute", left: 0, right: 0, bottom: 50, zIndex: 1, display: "flex", gap: 22, overflowX: "auto", padding: "0 32px" }}
           >
             {cards.map((c) => (
               <div
                 key={c.key}
                 style={{
                   flex: "0 0 auto", minWidth: 200, background: c.bg, borderRadius: 22,
-                  padding: "18px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14,
+                  padding: "60px 50px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24,
                 }}
               >
-                <img src={c.iconSrc} alt="" style={{ width: 46, height: 46, flexShrink: 0 }} />
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ fontWeight: 800, fontSize: 17, color: "#111" }}>{c.label}</div>
-                  <div style={{ fontWeight: 700, fontSize: 22, color: "#111" }}>{c.timeText}</div>
+                <img src={c.iconSrc} alt="" style={{ width: 50, height: 50, flexShrink: 0, marginLeft: -35, marginBottom: -50 }} />
+                <div style={{ textAlign: "right", marginBottom: -20, marginRight: -20 }}>
+                  <div style={{ fontWeight: 700, fontSize: 38, color: "#111" }}>{c.label}</div>
+                  <div style={{ fontWeight: 500, fontSize: 36, color: "#111" }}>{c.timeText}</div>
                   {c.subtext && (
-                    <div style={{ fontSize: 12, fontWeight: 700, color: c.subtextColor, marginTop: 2 }}>{c.subtext}</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: c.subtextColor, marginTop: 4 }}>{c.subtext}</div>
                   )}
                 </div>
               </div>
