@@ -345,7 +345,7 @@ export default function IotDisplay() {
         >
           <div
             style={{
-              position: "relative", width: "100%", maxWidth: 640, maxHeight: "82%", overflowY: "auto",
+              position: "relative", width: "100%", maxWidth: 600, height: "70%", overflowY: "auto",
               borderRadius: 32, padding: "56px 44px 90px",
               background: "linear-gradient(160deg, rgba(220, 235, 251, 0.9) 0%, rgba(234, 241, 252, 0.9) 45%, rgba(243, 240, 250, 0.9) 100%)",             boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
               fontSize: 20, lineHeight: 1.7, color: "#1a1a1a", whiteSpace: "pre-line", fontWeight: 500,
