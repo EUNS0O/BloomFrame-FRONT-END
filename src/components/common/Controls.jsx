@@ -11,8 +11,8 @@ export function Btn({ children, onClick, variant = "primary", disabled, icon: Ic
     <button
       onClick={disabled ? undefined : onClick}
       style={{
-        width: "100%", padding: padding || "15px 16px", borderRadius: 14, border: "none",
-        fontSize: 15, fontWeight: 700, cursor: disabled ? "default" : "pointer",
+        width: "100%", padding: padding || "8px 16px", borderRadius: 4, border: "none",
+        fontSize: 14, fontWeight: 300, cursor: disabled ? "default" : "pointer",
         display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
         ...styles,
       }}

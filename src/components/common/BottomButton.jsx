@@ -8,12 +8,12 @@ import React from "react";
 // - "medium" : 이전 기록(BottomNav 있는 화면인데 low보다는 위, high보다는 아래)
 // - "high"   : 로그인(하단 탭바가 있는 화면), 알람 설정(시간 선택) 등 더 위쪽에 오는 화면
 export const BOTTOM_OFFSET = {
-  low: 55,
-  medium: 100,
-  high: 110,
+  low: 75,
+  medium: 120,
+  high: 200,
 };
 
-export function BottomButton({ children, width = 170, variant = "low" }) {
+export function BottomButton({ children, width = "46%", variant = "low" }) {
   const bottom = BOTTOM_OFFSET[variant];
   return (
     <div style={{ position: "absolute", left: 0, right: 0, bottom, display: "flex", justifyContent: "center" }}>

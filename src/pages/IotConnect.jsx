@@ -4,8 +4,8 @@ import { useApp } from "../context/AppContext";
 import { C } from "../styles/tokens";
 import { nextId } from "../utils/format";
 import { TopBar } from "../components/common/Layout";
-import { BackHeader, Sub } from "../components/common/BackHeader";
 import { Btn } from "../components/common/Controls";
+import { BottomButton } from "../components/common/BottomButton";
 import { BottomNav } from "../components/common/BottomNav";
 
 export default function IotConnect() {
@@ -25,16 +25,19 @@ export default function IotConnect() {
   return (
     <>
       <TopBar />
-      <div style={{ flex: 1, padding: "20px 24px", display: "flex", flexDirection: "column" }}>
-        <BackHeader />
-        <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 6 }}>IoT 기기 연결</div>
-        <Sub>IoT 기기에 연결하기 위해<br />고유 넘버를 입력해 주세요</Sub>
+      <div style={{ flex: 1, padding: "40px 35px 100px", overflowY: "auto" }}>
+        <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 16 }}>IoT 기기 연결</div>
+        <div style={{ fontSize: 17, color: C.gray, lineHeight: 1.6, marginBottom: 40, fontWeight: 500 }}>
+          IoT 기기에 연결하기 위해<br />고유 넘버를 입력해 주세요
+        </div>
         <input
           autoFocus value={code} onChange={(e) => setCode(e.target.value)}
-          style={{ width: "100%", boxSizing: "border-box", padding: "14px", borderRadius: 12, border: `1px solid ${C.grayLine}`, background: C.field, fontSize: 15 }}
+          style={{ width: "100%", boxSizing: "border-box", padding: "14px", borderRadius: 5, border: `1px solid ${C.grayLine}`, background: C.bg, fontSize: 15 }}
         />
-        <div style={{ flex: 1 }} />
-        <Btn disabled={!code} onClick={handleConfirm}>확인</Btn>
+
+        <BottomButton variant="high">
+          <Btn disabled={!code} onClick={handleConfirm}>확인</Btn>
+        </BottomButton>
       </div>
       <BottomNav />
     </>
