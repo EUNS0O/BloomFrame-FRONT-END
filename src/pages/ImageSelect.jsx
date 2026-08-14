@@ -26,14 +26,14 @@ export default function ImageSelect() {
     return (
       <>
         <TopBar />
-        <div style={{ flex: 1, padding: "0 30px 100px", overflowY: "auto" }}>
-          <BackHeader hideBack />
-          <div style={{ fontSize: 24, fontWeight: 800, marginTop: 40, marginBottom: 10, paddingLeft: 12 }}>이미지 선택</div>
-          <div style={{ fontSize: 15, color: C.gray, lineHeight: 1.6, paddingLeft: 12, fontWeight: 500 }}>
+        <div style={{ flex: 1, padding: "40px 35px 100px", overflowY: "auto" }}>
+         
+<div style={{ fontSize: 28, fontWeight: 800, marginBottom: 10 }}>이미지 선택</div>
+          <div style={{ fontSize: 17, color: C.gray, lineHeight: 1.6, fontWeight: 500 }}>
             IoT 스크린에 들어갈 이미지를 선택해 주세요
           </div>
           <ImageGrid selected={wip.image} onSelect={(i) => setWip((w) => ({ ...w, image: i }))} />
-          <BottomButton>
+          <BottomButton variant="high">
             <Btn disabled={wip.image == null} onClick={confirmImageOnly} padding="10px 14px">확인</Btn>
           </BottomButton>
         </div>
@@ -42,15 +42,9 @@ export default function ImageSelect() {
     );
   }
 
-  // 온보딩 / 알림 카테고리 추가 / 알림 목록에서 수정 흐름
+  // 온보딩 / 알림 카테고리 추가 흐름
   const finishCategory = () => {
-    setData((d) => {
-      const isEditing = d.categories.some((c) => c.id === wip.id);
-      const categories = isEditing
-        ? d.categories.map((c) => (c.id === wip.id ? wip : c)) // 기존 항목 수정: 덮어쓰기
-        : [...d.categories, wip]; // 새 항목: 추가
-      return { ...d, categories };
-    });
+    setData((d) => ({ ...d, categories: [...d.categories, wip] }));
     setWip(null);
     if (onboarding) navigate("/onboarding/category/more");
     else navigate("/home");
