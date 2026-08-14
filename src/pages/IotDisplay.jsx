@@ -257,14 +257,14 @@ export default function IotDisplay() {
         <div style={{ position: "relative", display: "inline-block" }}>
           <div
             style={{
-              position: "absolute", left: -72, top: 55, zIndex: 0,
+              position: "absolute", left: -72, top: 55, zIndex: 0,   display: "flex",
+              flexDirection: "column",alignItems: "flex-start",
               fontSize: 17, fontWeight: 700, lineHeight: 1.4,
               color: "rgba(255, 242, 215, 0.75)", textShadow: "-4px 4px 0 rgba(0,0,0,0.07)",
             }}
           >
-            {md}
-            <br />
-            {day}
+            <span>{md}</span>
+            <span style={{ marginLeft: 20 }}>{day}</span>
           </div>
           <div
             style={{
@@ -347,8 +347,7 @@ export default function IotDisplay() {
             style={{
               position: "relative", width: "100%", maxWidth: 640, maxHeight: "82%", overflowY: "auto",
               borderRadius: 32, padding: "56px 44px 90px",
-              background: "linear-gradient(160deg, #DCEBFB 0%, #EAF1FC 45%, #F3F0FA 100%)",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
+              background: "linear-gradient(160deg, rgba(220, 235, 251, 0.9) 0%, rgba(234, 241, 252, 0.9) 45%, rgba(243, 240, 250, 0.9) 100%)",             boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
               fontSize: 20, lineHeight: 1.7, color: "#1a1a1a", whiteSpace: "pre-line", fontWeight: 500,
             }}
           >
@@ -359,7 +358,7 @@ export default function IotDisplay() {
               style={{
                 position: "absolute", right: 36, bottom: 32, width: 64, height: 64, borderRadius: "50%",
                 border: "none", background: "#FF6A34", color: "#fff", fontSize: 26, fontWeight: 800,
-                cursor: "pointer", boxShadow: "0 6px 16px rgba(255,106,52,0.4)",
+                cursor: "pointer", 
               }}
             >
               X
