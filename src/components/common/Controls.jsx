@@ -11,15 +11,9 @@ export function Btn({ children, onClick, variant = "primary", disabled, icon: Ic
     <button
       onClick={disabled ? undefined : onClick}
       style={{
-        width: "100%",
-        padding: padding || "15px 60px",
-        borderRadius: 5, border: "none",
-        fontSize: 10, fontWeight: 700, 
-        cursor: disabled ? "default" : "pointer",
-        display: "flex",
-        alignItems: "center", 
-        justifyContent: "center", 
-        gap: 8,
+        width: "100%", padding: padding || "15px 16px", borderRadius: 14, border: "none",
+        fontSize: 15, fontWeight: 700, cursor: disabled ? "default" : "pointer",
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
         ...styles,
       }}
     >
@@ -29,11 +23,11 @@ export function Btn({ children, onClick, variant = "primary", disabled, icon: Ic
   );
 }
 
-export function Field({ label, textColor, placeholderColor, bg, borderColor, width, marginBottom, ...props }) {
+export function Field({ label, textColor, placeholderColor, bg, borderColor, marginBottom, ...props }) {
   const uid = React.useId().replace(/:/g, "");
   return (
-    <div style={{ marginTop: 20, marginBottom: marginBottom ?? 5 }}>
-      {label && <div style={{ fontSize: 16, fontWeight: 700, color: C.black, marginBottom: 5, paddingLeft: 8 }}>{label}</div>}
+    <div style={{ marginBottom: marginBottom ?? 16 }}>
+      {label && <div style={{ fontSize: 13.5, fontWeight: 700, color: C.black, marginBottom: 8 }}>{label}</div>}
       {placeholderColor && (
         <style>{`.f-${uid}::placeholder { color: ${placeholderColor}; }`}</style>
       )}
@@ -41,26 +35,20 @@ export function Field({ label, textColor, placeholderColor, bg, borderColor, wid
         {...props}
         className={`f-${uid}`}
         style={{
-          display: "block",
-          width: width || "100%", boxSizing: "border-box", padding: "9px 9px 9px 16px", borderRadius: 5,
-          border: `1px solid ${borderColor || C.black}`,
-          background: bg || C.field,
-          fontSize: 12,
-          color: textColor || C.black,
-          outline: "none",
-          margin: "0 auto",
+          width: "100%", boxSizing: "border-box", padding: "13px 14px", borderRadius: 12,
+          border: `1px solid ${borderColor || C.grayLine}`, background: bg || C.field, fontSize: 14.5, color: textColor || C.black, outline: "none",
         }}
       />
     </div>
   );
 }
 
-export function Card({ children, onClick, active, borderRadius = 16, padding = "16px 18px", width = "100%", marginBottom = 12 }) {
+export function Card({ children, onClick, active, borderRadius = 16, padding = "16px 18px", width = "100%", marginBottom = 12, bg }) {
   return (
     <div
       onClick={onClick}
       style={{
-        background: active ? C.orange : C.field, color: active ? "#fff" : C.black,
+        background: active ? C.orange : (bg || C.field), color: active ? "#fff" : C.black,
         borderRadius, padding, width, margin: `0 auto ${marginBottom}px`, boxSizing: "border-box",
         display: "flex", alignItems: "center",
         justifyContent: "space-between", cursor: onClick ? "pointer" : "default",
