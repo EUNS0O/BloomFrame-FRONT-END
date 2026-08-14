@@ -39,11 +39,11 @@ export default function MyPage() {
       <TopBar />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
         <div style={{ padding: "40px 35px 0" }}>
-          <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 26 }}>마이페이지</div>
+          <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 40 }}>마이페이지</div>
         </div>
 
         <div style={{ flex: 1, overflowY: "auto", padding: "0 35px 40px" }}>
-          <div style={{ background: C.black, color: "#fff", borderRadius: 9, padding: "27px 19px", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32 }}>
+          <div style={{ background: C.black, color: "#fff", borderRadius: 9, padding: "27px 19px", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 40 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{ width: 50, height: 50, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <img src={cloverOrange} alt="" style={{ width: 50, height: 50 }} />
@@ -57,14 +57,14 @@ export default function MyPage() {
           </div>
 
           <div style={{ fontSize: 20, fontWeight: 700, color: C.black, marginBottom: 10 }}>복용약 정보</div>
-          <Card onClick={() => navigate("/mypage/meds")} borderRadius={8}>
+          <Card onClick={() => navigate("/mypage/meds")} borderRadius={8} padding="10px 18px">
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <img src={iconMedicine} alt="" style={{ width: 26, height: 26 }} />
               <span style={{ fontWeight: 600, fontSize: 15 }}>약 목록</span>
             </div>
             <img src={rightSmall} alt="" style={{ width: 8, height: "auto" }} />
           </Card>
-          <Card onClick={() => alert("건강 상태를 업데이트합니다.")} borderRadius={8}>
+          <Card onClick={() => alert("건강 상태를 업데이트합니다.")} borderRadius={8} padding="10px 18px">
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <img src={iconHealth} alt="" style={{ width: 26, height: 26 }} />
               <span style={{ fontWeight: 600, fontSize: 15 }}>건강 상태 업데이트</span>
@@ -73,16 +73,16 @@ export default function MyPage() {
           </Card>
 
           <div style={{ fontSize: 20, fontWeight: 700, color: C.black, margin: "20px 0 10px" }}>설정</div>
-          <Card borderRadius={8}>
+          <Card borderRadius={8} padding="10px 18px">
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <img src={iconAlarm} alt="" style={{ width: 26, height: 26 }} />
               <span style={{ fontWeight: 600, fontSize: 15 }}>AI 추천 정보 나타내기</span>
             </div>
-            <div onClick={() => update({ aiRecommend: !data.aiRecommend })} style={{ width: 40, height: 24, borderRadius: 20, background: data.aiRecommend ? C.black : C.grayLine, position: "relative", cursor: "pointer" }}>
-              <div style={{ width: 18, height: 18, borderRadius: "50%", background: "#fff", position: "absolute", top: 3, left: data.aiRecommend ? 19 : 3, transition: "left .15s" }} />
+            <div onClick={() => update({ aiRecommend: !data.aiRecommend })} style={{ width: 38, height: 18, borderRadius: 20, background: data.aiRecommend ? C.black : C.grayLine, position: "relative", cursor: "pointer" }}>
+              <div style={{ width: 14, height: 14, borderRadius: "50%", background: "#fff", position: "absolute", top: 2, left: data.aiRecommend ? 21 : 3, transition: "left .15s" }} />
             </div>
           </Card>
-          <Card onClick={changeImage} borderRadius={8}>
+          <Card onClick={changeImage} borderRadius={8} padding="10px 18px">
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <img src={iconImage} alt="" style={{ width: 26, height: 26 }} />
               <span style={{ fontWeight: 600, fontSize: 15 }}>이미지 바꾸기</span>
@@ -91,21 +91,21 @@ export default function MyPage() {
           </Card>
 
           <div style={{ fontSize: 20, fontWeight: 700, color: C.black, margin: "20px 0 10px" }}>이용 안내</div>
-          <Card onClick={() => navigate("/mypage/guide")} borderRadius={8}>
+          <Card onClick={() => navigate("/mypage/guide")} borderRadius={8} padding="10px 18px">
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <img src={iconMenu} alt="" style={{ width: 26, height: 26 }} />
               <span style={{ fontWeight: 600, fontSize: 15 }}>이용 안내</span>
             </div>
             <img src={rightSmall} alt="" style={{ width: 8, height: "auto" }} />
           </Card>
-          <Card onClick={() => navigate("/mypage/inquiry")} borderRadius={8}>
+          <Card onClick={() => navigate("/mypage/inquiry")} borderRadius={8} padding="10px 18px">
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <img src={iconChat} alt="" style={{ width: 26, height: 26 }} />
               <span style={{ fontWeight: 600, fontSize: 15 }}>문의하기</span>
             </div>
             <img src={rightSmall} alt="" style={{ width: 8, height: "auto" }} />
           </Card>
-          <Card onClick={logout} borderRadius={8}>
+          <Card onClick={logout} borderRadius={8} padding="10px 18px">
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <img src={iconLogout} alt="" style={{ width: 26, height: 26 }} />
               <span style={{ fontWeight: 600, fontSize: 15 }}>로그아웃</span>
