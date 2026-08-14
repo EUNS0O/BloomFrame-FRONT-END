@@ -27,15 +27,26 @@ const SECTIONS = [
 ];
 
 export default function Guide() {
+  const scrollId = React.useId().replace(/:/g, "");
+
   return (
-    <>
+    <div style={{ height: 890, display: "flex", flexDirection: "column" }}>
       <TopBar />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+      <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
         <div style={{ padding: "40px 35px 0" }}>
           <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 35 }}>이용 안내</div>
         </div>
 
-        <div style={{ flex: 1, overflowY: "auto", padding: "0 35px 40px" }}>
+        <style>{`
+          .vscroll-${scrollId} { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+          .vscroll-${scrollId}:hover { scrollbar-color: ${C.grayLine} transparent; }
+          .vscroll-${scrollId}::-webkit-scrollbar { width: 3px; }
+          .vscroll-${scrollId}::-webkit-scrollbar-track { background: transparent; }
+          .vscroll-${scrollId}::-webkit-scrollbar-thumb { background: transparent; border-radius: 4px; }
+          .vscroll-${scrollId}:hover::-webkit-scrollbar-thumb { background: ${C.grayLine}; }
+        `}</style>
+
+        <div className={`vscroll-${scrollId}`} style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "0 35px 40px" }}>
           {SECTIONS.map((s, i) => (
             <div key={s.title} style={{ marginBottom: i === SECTIONS.length - 1 ? 0 : 28 }}>
               <div style={{ fontSize: 20, fontWeight: 600, color: C.black, marginBottom: 6 }}>{s.title}</div>
@@ -45,6 +56,6 @@ export default function Guide() {
         </div>
       </div>
       <BottomNav />
-    </>
+    </div>
   );
 }
