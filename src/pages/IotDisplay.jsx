@@ -1,18 +1,28 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Pill, Dumbbell } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import bgIdle from "../assets/iot/bg_idle.webp";
 import bgAlarm from "../assets/iot/bg_alarm.webp";
 import bgChange from "../assets/iot/bg_change.mp4";
-import bloomToWilt from "../assets/iot/bloom_to_wilt.mp4";
-import wiltToBloom from "../assets/iot/wilt_to_bloom.mp4";
+import bloomToWilt from "../assets/iot/bloom_to_wilt.webm";
+import wiltToBloom from "../assets/iot/wilt_to_bloom.webm";
 import posterBloom from "../assets/iot/poster_blooming.png";
 import posterWilt from "../assets/iot/poster_wilted.png";
+import medicineYellow from "../assets/iot/medicine_yellow.png";
+import medicineGreen from "../assets/iot/medicine_green.png";
+import medicineRed from "../assets/iot/medicine_red.png";
+import gymBlue from "../assets/iot/gym_blue.png";
+import gymGreen from "../assets/iot/gym_green.png";
+import gymRed from "../assets/iot/gym_red.png";
 
 const Z = { bg: 0, clock: 1, plant: 2, cards: 3, newsletter: 4 };
+const PLANT_OFFSET_Y =-161; // 식물을 화면 정중앙에서 위로 옮기는 값 (음수=위로, 양수=아래로)
 
-const CARD_ICON = { med: Pill, exercise: Dumbbell, other: Pill };
+const CARD_ICON = {
+  med: { pending: medicineYellow, success: medicineGreen, missed: medicineRed },
+  exercise: { pending: gymBlue, success: gymGreen, missed: gymRed },
+  other: { pending: medicineYellow, success: medicineGreen, missed: medicineRed }, // "기타" 전용 아이콘 없어서 약 아이콘으로 임시 대체
+};
 const CARD_LABEL = { med: "약", exercise: "운동", other: "기타" };
 const STATE_STYLE = {
   pending_med: { bg: "#FBF0DA", accent: "#E0A82E" },
@@ -21,7 +31,6 @@ const STATE_STYLE = {
   success: { bg: "#DCEEDD", accent: "#3CAE6B" },
   missed: { bg: "#FBD9D9", accent: "#E05353" },
 };
-const URGENT_THRESHOLD_MIN = 10;
 
 const MOCK_NEWSLETTER = `안녕하세요 김인하님!
 오늘도 보람찬 하루를 보내셨군요☺️
@@ -42,6 +51,7 @@ const MOCK_NEWSLETTER = `안녕하세요 김인하님!
 
 const STAGE1_MS = 3 * 60 * 1000;
 const STAGE2_MS = 10 * 60 * 1000;
+const PRE_ALARM_MS = 5 * 60 * 1000; // 배경이 알림 시각보다 몇 분 "일찍" 바뀔지 (기본 5분 전)
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 function formatClock(d) {
@@ -60,42 +70,74 @@ function toTodayDate(t) {
 export default function IotDisplay() {
   const { data } = useApp();
   const [searchParams] = useSearchParams();
+  const scrollId = React.useId().replace(/:/g, "");
 
   const testIn = searchParams.get("testIn");
+  const cardsTest = searchParams.get("cardsTest") === "1"; // 카드 색/상태 6종을 한 번에 보여주는 전용 테스트 모드
   const stage1Ms = Number(searchParams.get("stage1")) > 0 ? Number(searchParams.get("stage1")) * 1000 : STAGE1_MS;
   const stage2Ms = Number(searchParams.get("stage2")) > 0 ? Number(searchParams.get("stage2")) * 1000 : STAGE2_MS;
+  const preAlarmMs = Number(searchParams.get("preAlarm")) >= 0 ? Number(searchParams.get("preAlarm")) * 1000 : PRE_ALARM_MS;
 
+  // ?cardsTest=1 이면: 약/운동 각각 "여유 있음(회색)"/"임박(빨강)" + "성공(초록)"/"실패(빨강)" 카드를 즉시 생성
   const schedule = useMemo(() => {
+    if (cardsTest) {
+      const nowMs = Date.now();
+      return [
+        { key: "t-med-far", at: new Date(nowMs + 45 * 60000), label: "med" },
+        { key: "t-med-soon", at: new Date(nowMs + 5 * 60000), label: "med" },
+        { key: "t-ex-far", at: new Date(nowMs + 45 * 60000), label: "exercise" },
+        { key: "t-ex-soon", at: new Date(nowMs + 5 * 60000), label: "exercise" },
+        { key: "t-success", at: new Date(nowMs - 60 * 60000), label: "med" },
+        { key: "t-missed", at: new Date(nowMs - 60 * 60000), label: "exercise" },
+      ];
+    }
     if (testIn != null) {
       return [{ key: "test-alarm", at: new Date(Date.now() + Number(testIn) * 1000), label: "test" }];
     }
     return data.categories
       .flatMap((c) => c.times.map((t) => ({ key: `${c.id}-${t.id}`, at: toTodayDate(t), label: c.type })))
       .sort((a, b) => a.at - b.at);
-  }, [data.categories, testIn]);
+  }, [data.categories, testIn, cardsTest]);
 
   const [plantState, setPlantState] = useState("BLOOMING");
   const [transition, setTransition] = useState(null);
   const [alarmPhase, setAlarmPhase] = useState(null);
   const [activeAlarmKey, setActiveAlarmKey] = useState(null);
-  const [remainingSeconds, setRemainingSeconds] = useState(null);
   const [now, setNow] = useState(new Date());
   const [bgVideoPlaying, setBgVideoPlaying] = useState(false);
+  const [bgAlarmActive, setBgAlarmActive] = useState(false); // 배경 전용 — 알림 정각보다 preAlarmMs만큼 일찍 켜짐
   const [showNewsletter, setShowNewsletter] = useState(false);
   const resolvedKeys = useRef(new Set());
   const outcomes = useRef(new Map());
   const wasAlarmWindow = useRef(false);
 
+  // cardsTest 모드: "이미 지난" 카드 2개는 성공/실패 결과를 미리 심어둠
+  useEffect(() => {
+    if (cardsTest) {
+      resolvedKeys.current.add("t-success");
+      outcomes.current.set("t-success", "success");
+      resolvedKeys.current.add("t-missed");
+      outcomes.current.set("t-missed", "missed");
+    }
+  }, [cardsTest]);
+
   useEffect(() => {
     const tick = () => {
       setNow(new Date());
       const nowMs = Date.now();
+
+      // 배경 전용: 알림 정각보다 preAlarmMs만큼 일찍부터 ~ stage2Ms 끝날 때까지 "임박" 상태
+      const bgCurrent = schedule.find(
+        (s) => !resolvedKeys.current.has(s.key) && nowMs >= s.at.getTime() - preAlarmMs && nowMs < s.at.getTime() + stage2Ms
+      );
+      setBgAlarmActive(!!bgCurrent);
+
+      // 꽃 시듦/카드 카운트다운은 기존대로 알림 "정각"부터 시작
       const current = schedule.find((s) => !resolvedKeys.current.has(s.key) && nowMs >= s.at.getTime() && nowMs < s.at.getTime() + stage2Ms);
 
       if (!current) {
         setAlarmPhase(null);
         setActiveAlarmKey(null);
-        setRemainingSeconds(null);
         return;
       }
 
@@ -104,20 +146,17 @@ export default function IotDisplay() {
 
       if (elapsed <= stage1Ms) {
         setAlarmPhase(1);
-        setRemainingSeconds(Math.max(0, Math.ceil((stage1Ms - elapsed) / 1000)));
       } else {
         setAlarmPhase((prev) => {
           if (prev !== 2 && plantState === "BLOOMING") setTransition("toWilt");
           return 2;
         });
-        setRemainingSeconds(Math.max(0, Math.ceil((stage2Ms - elapsed) / 1000)));
 
         if (elapsed >= stage2Ms) {
           resolvedKeys.current.add(current.key);
           outcomes.current.set(current.key, "missed");
           setAlarmPhase(null);
           setActiveAlarmKey(null);
-          setRemainingSeconds(null);
         }
       }
     };
@@ -125,7 +164,7 @@ export default function IotDisplay() {
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [schedule, plantState, stage1Ms, stage2Ms]);
+  }, [schedule, plantState, stage1Ms, stage2Ms, preAlarmMs]);
 
   const handleTransitionEnd = () => {
     setPlantState(transition === "toWilt" ? "WILTED" : "BLOOMING");
@@ -143,44 +182,49 @@ export default function IotDisplay() {
     setShowNewsletter(true);
   };
 
-  const isAlarmWindow = alarmPhase === 1 || alarmPhase === 2;
+  const isAlarmWindow = alarmPhase === 1 || alarmPhase === 2; // 꽃/카드용 — 정각 기준
 
   useEffect(() => {
-    if (isAlarmWindow && !wasAlarmWindow.current) {
-      setBgVideoPlaying(true);
+    if (bgAlarmActive && !wasAlarmWindow.current) {
+      setBgVideoPlaying(true); // preAlarmMs 전, 배경이 처음 바뀌는 순간에만 전환 영상 재생
     }
-    if (!isAlarmWindow) {
+    if (!bgAlarmActive) {
       setBgVideoPlaying(false);
     }
-    wasAlarmWindow.current = isAlarmWindow;
-  }, [isAlarmWindow]);
+    wasAlarmWindow.current = bgAlarmActive;
+  }, [bgAlarmActive]);
 
   const videoSrc = transition === "toWilt" ? bloomToWilt : transition === "toBloom" ? wiltToBloom : null;
   const { md, day } = formatDate(now);
 
   const cards = schedule.map((s) => {
     const isResolved = resolvedKeys.current.has(s.key);
-    const status = isResolved ? outcomes.current.get(s.key) : `pending_${s.label}`;
+    const outcome = isResolved ? outcomes.current.get(s.key) : "pending"; // "pending" | "success" | "missed"
+    const status = isResolved ? outcome : `pending_${s.label}`;
     const style = STATE_STYLE[status] || STATE_STYLE.pending_other;
+    const iconSet = CARD_ICON[s.label] || CARD_ICON.other;
 
     let subtext = null;
     let subtextColor = "#9A9993";
-    if (!isResolved) {
-      const deadline = now.getTime() >= s.at.getTime() ? s.at.getTime() + stage2Ms : s.at.getTime();
-      const totalMin = Math.max(0, Math.ceil((deadline - now.getTime()) / 60000));
-      const h = Math.floor(totalMin / 60);
-      const m = totalMin % 60;
-      subtext = `${h}:${String(m).padStart(2, "0")}`;
-      subtextColor = totalMin <= URGENT_THRESHOLD_MIN ? "#E5484D" : "#9A9993";
+    const isActiveAlarm = !isResolved && s.key === activeAlarmKey;
+
+    if (isActiveAlarm) {
+      // 알림 시각부터 경과된 시간을 00:00 → 10:00으로 증가시키며 표시
+      const elapsedMs = Math.max(0, now.getTime() - s.at.getTime());
+      const elapsedSec = Math.min(Math.floor(elapsedMs / 1000), Math.floor(stage2Ms / 1000));
+      const mm = Math.floor(elapsedSec / 60);
+      const ss = elapsedSec % 60;
+      subtext = `${mm}:${String(ss).padStart(2, "0")}`;
+      subtextColor = elapsedMs <= stage1Ms ? "#9A9993" : "#E5484D";
     }
+    // 아직 알림 시각이 안 된 카드는 subtext를 계속 null로 둠 (아무것도 표시 안 함)
 
     return {
       key: s.key,
       label: CARD_LABEL[s.label] || "기타",
       timeText: `${String(s.at.getHours()).padStart(2, "0")}:${String(s.at.getMinutes()).padStart(2, "0")}`,
-      Icon: CARD_ICON[s.label] || Pill,
+      iconSrc: iconSet[outcome],
       bg: style.bg,
-      accent: style.accent,
       subtext,
       subtextColor,
     };
@@ -194,8 +238,8 @@ export default function IotDisplay() {
         fontFamily: "'NanumSquareRound', sans-serif",
       }}
     >
-      <img src={bgIdle} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: isAlarmWindow ? 0 : 1, transition: "opacity 1.2s ease", zIndex: Z.bg }} />
-      <img src={bgAlarm} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: isAlarmWindow ? 1 : 0, transition: "opacity 1.2s ease", zIndex: Z.bg }} />
+      <img src={bgIdle} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: bgAlarmActive ? 0 : 1, transition: "opacity 1.2s ease", zIndex: Z.bg }} />
+      <img src={bgAlarm} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: bgAlarmActive ? 1 : 0, transition: "opacity 1.2s ease", zIndex: Z.bg }} />
 
       {bgVideoPlaying && (
         <video
@@ -225,19 +269,13 @@ export default function IotDisplay() {
           <div
             style={{
               position: "relative", zIndex: 1,
-              fontFamily: "'KERISKEDU', sans-serif", fontWeight: 700, fontSize: 114,
+              fontFamily: "'KERISKEDU', sans-serif", fontWeight: 700, fontSize: 115,
               color: "#FBEFDD", textShadow: "-4px 4px 0 rgba(0,0,0,0.15)",
             }}
           >
             {formatClock(now)}
           </div>
         </div>
-
-        {remainingSeconds != null && (
-          <div style={{ marginTop: 8, fontSize: 18, fontWeight: 700, color: alarmPhase === 1 ? "#9A9993" : "#E5484D" }}>
-            {remainingSeconds}초
-          </div>
-        )}
       </div>
 
       {/* 식물 — 정지 이미지에는 왼쪽·아래로 옅은 drop-shadow 추가 (영상은 알파가 없어 사각형 그림자로 어색해서 제외) */}
@@ -250,40 +288,51 @@ export default function IotDisplay() {
             muted
             playsInline
             onEnded={handleTransitionEnd}
-            style={{ width: "39%", maxWidth: 600, mixBlendMode: "screen" }}
+            style={{ width: "39%", maxWidth: 600, transform: `translateY(${PLANT_OFFSET_Y}px)` }}
           />
         ) : (
           <img
             src={plantState === "BLOOMING" ? posterBloom : posterWilt}
             alt=""
-            style={{ width: "39%", maxWidth: 600, objectFit: "contain", filter: "drop-shadow(-10px 6px 10px rgba(0,0,0,0.22))" }}
+            style={{
+              width: "39%", maxWidth: 600, objectFit: "contain",
+              filter: "drop-shadow(-10px 6px 10px rgba(0,0,0,0.22))",
+              transform: `translateY(${PLANT_OFFSET_Y}px)`,
+            }}
           />
         )}
       </div>
 
       {cards.length > 0 && (
-        <div style={{ position: "absolute", left: 0, right: 0, bottom: 32, zIndex: Z.cards, display: "flex", gap: 14, overflowX: "auto", padding: "0 32px" }}>
-          {cards.map((c) => (
-            <div
-              key={c.key}
-              style={{
-                flex: "0 0 auto", minWidth: 200, background: c.bg, borderRadius: 22,
-                padding: "18px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14,
-              }}
-            >
-              <div style={{ width: 46, height: 46, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <c.Icon size={20} color={c.accent} strokeWidth={2} />
+        <>
+          <style>{`
+            .cards-scroll-${scrollId} { scrollbar-width: none; -ms-overflow-style: none; }
+            .cards-scroll-${scrollId}::-webkit-scrollbar { display: none; }
+          `}</style>
+          <div
+            className={`cards-scroll-${scrollId}`}
+            style={{ position: "absolute", left: 0, right: 0, bottom: 32, zIndex: Z.cards, display: "flex", gap: 14, overflowX: "auto", padding: "0 32px" }}
+          >
+            {cards.map((c) => (
+              <div
+                key={c.key}
+                style={{
+                  flex: "0 0 auto", minWidth: 200, background: c.bg, borderRadius: 22,
+                  padding: "18px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14,
+                }}
+              >
+                <img src={c.iconSrc} alt="" style={{ width: 46, height: 46, flexShrink: 0 }} />
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontWeight: 800, fontSize: 17, color: "#111" }}>{c.label}</div>
+                  <div style={{ fontWeight: 700, fontSize: 22, color: "#111" }}>{c.timeText}</div>
+                  {c.subtext && (
+                    <div style={{ fontSize: 12, fontWeight: 700, color: c.subtextColor, marginTop: 2 }}>{c.subtext}</div>
+                  )}
+                </div>
               </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={{ fontWeight: 800, fontSize: 17, color: "#111" }}>{c.label}</div>
-                <div style={{ fontWeight: 700, fontSize: 22, color: "#111" }}>{c.timeText}</div>
-                {c.subtext && (
-                  <div style={{ fontSize: 12, fontWeight: 700, color: c.subtextColor, marginTop: 2 }}>{c.subtext}</div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </>
       )}
 
       {showNewsletter && (
