@@ -9,7 +9,7 @@ import React from "react";
 // - "high"   : 로그인(하단 탭바가 있는 화면), 알람 설정(시간 선택) 등 더 위쪽에 오는 화면
 export const BOTTOM_OFFSET = {
   low: 75,
-  medium: 120,
+  medium: 150,
   high: 200,
 };
 

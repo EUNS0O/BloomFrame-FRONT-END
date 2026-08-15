@@ -117,7 +117,7 @@ export default function History() {
           })}
         </div>
 
-        <BottomButton variant="high">
+        <BottomButton variant="medium">
           <Btn onClick={() => navigate(-1)} padding="10px 14px">확인</Btn>
         </BottomButton>
       </div>
