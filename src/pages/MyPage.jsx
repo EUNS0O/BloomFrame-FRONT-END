@@ -21,8 +21,13 @@ const editBtnStyle = { padding: "3px 12px", borderRadius: 20, border: "none", ba
 
 export default function MyPage() {
   const navigate = useNavigate();
-  const { data, update, setWip, setImageOnly, resetAll } = useApp();
+  const { data, update, setWip, setImageOnly, setAccountEditMode, resetAll } = useApp();
   const scrollId = React.useId().replace(/:/g, "");
+
+  const editAccount = () => {
+    setAccountEditMode(true);
+    navigate("/signup/info");
+  };
 
   const changeImage = () => {
     setImageOnly(true);
@@ -63,7 +68,7 @@ export default function MyPage() {
                 <div style={{ fontSize: 12, color: "#C9C7C2" }}>{data.name || "홍길동"} {data.selfPhone || "010-0000-0000"}</div>
               </div>
             </div>
-            <button style={editBtnStyle}>수정</button>
+            <button style={editBtnStyle} onClick={editAccount}>수정</button>
           </div>
 
           <div style={{ fontSize: 20, fontWeight: 700, color: C.black, marginBottom: 10 }}>복용약 정보</div>

@@ -44,6 +44,7 @@ export function AppProvider({ children }) {
   const [wip, setWip] = useState(null); // 온보딩/알림 추가 중인 카테고리
   const [onboarding, setOnboarding] = useState(true);
   const [imageOnly, setImageOnly] = useState(false); // 마이페이지 "이미지 바꾸기" 단독 흐름 여부
+  const [accountEditMode, setAccountEditMode] = useState(false); // 마이페이지 "수정"으로 SignupInfo 재사용하는 흐름 여부
 
   // data가 바뀔 때마다 localStorage에 동기화 — 새 탭/새로고침해도 이걸로 복원됨
   useEffect(() => {
@@ -61,10 +62,11 @@ export function AppProvider({ children }) {
     setWip(null);
     setOnboarding(true);
     setImageOnly(false);
+    setAccountEditMode(false);
   };
 
   return (
-    <AppContext.Provider value={{ data, setData, update, wip, setWip, onboarding, setOnboarding, imageOnly, setImageOnly, resetAll }}>
+    <AppContext.Provider value={{ data, setData, update, wip, setWip, onboarding, setOnboarding, imageOnly, setImageOnly, accountEditMode, setAccountEditMode, resetAll }}>
       {children}
     </AppContext.Provider>
   );

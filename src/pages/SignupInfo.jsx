@@ -11,10 +11,19 @@ const FIELD_MB = 20; // 필드 사이 간격 (조절용)
 
 export default function SignupInfo() {
   const navigate = useNavigate();
-  const { data, update, setOnboarding, setWip } = useApp();
+  const { data, update, setOnboarding, setWip, accountEditMode, setAccountEditMode } = useApp();
   const [phoneFocused, setPhoneFocused] = useState(false);
   const [permissionsAgreed, setPermissionsAgreed] = useState(false);
   const scrollId = React.useId().replace(/:/g, "");
+
+  const handleConfirm = () => {
+    if (accountEditMode) {
+      setAccountEditMode(false);
+      navigate("/mypage"); // 온보딩으로 새지 않고 마이페이지로 복귀
+    } else {
+      startOnboardingCategoryFlow();
+    }
+  };
 
   const startOnboardingCategoryFlow = () => {
     setOnboarding(true);
@@ -36,6 +45,9 @@ export default function SignupInfo() {
 
   const showPhoneVerifyButton = phoneFocused && !data.phoneVerifying;
 
+  // 회원가입(수정 아님) 흐름에서만 권한 동의가 확인 버튼을 막음
+  const confirmDisabled = !accountEditMode && !permissionsAgreed;
+
   return (
     <div style={{ height: 890, display: "flex", flexDirection: "column" }}>
       {/* 스크롤 영역: 헤더+입력창들만. 확인 버튼 자리는 절대 침범 안 함 */}
@@ -48,10 +60,10 @@ export default function SignupInfo() {
           .vscroll-${scrollId}::-webkit-scrollbar-thumb { background: transparent; border-radius: 4px; }
           .vscroll-${scrollId}:hover::-webkit-scrollbar-thumb { background: ${C.grayLine}; }
         `}</style>
-        <BackHeader progress={40} />
-        <div style={{ fontSize: 24, fontWeight: 800, marginTop: 20, marginBottom: 8 }}>회원 정보 입력</div>
+        <BackHeader progress={accountEditMode ? undefined : 40} />
+        <div style={{ fontSize: 24, fontWeight: 800, marginTop: 20, marginBottom: 8 }}>{accountEditMode ? "회원 정보 수정" : "회원 정보 입력"}</div>
         <div style={{ fontSize: 13.5, color: C.gray, lineHeight: 1.6, marginBottom: 28 }}>
-          시니어 · 본인 공통 정보를 입력해 주세요
+          시니어 · 본인 공통 정보를 {accountEditMode ? "수정해" : "입력해"} 주세요
         </div>
 
         <Field label="이름" placeholder="홍길동" value={data.name} onChange={(e) => update({ name: e.target.value })} {...fieldProps} />
@@ -86,23 +98,25 @@ export default function SignupInfo() {
         <Field label="비밀번호" type="password" placeholder="••••••••" value={data.password} onChange={(e) => update({ password: e.target.value })} {...fieldProps} />
         <Field label="비밀번호 확인" type="password" placeholder="••••••••" value={data.passwordConfirm} onChange={(e) => update({ passwordConfirm: e.target.value })} {...fieldProps} marginBottom={20} />
 
-        {/* 앱 접근 권한 동의 */}
-        <div
-          onClick={() => setPermissionsAgreed((v) => !v)}
-          style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", padding: "4px 2px 20px" }}
-        >
-          <img src={permissionsAgreed ? agreeIcon : nonAgreeIcon} alt="" style={{ width: 20, height: 20, flexShrink: 0, marginTop: 1 }} />
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 500, color: C.black }}>앱 접근 권한에 동의하십니까?</div>
-            <div style={{ fontSize: 12.5, color: C.black, marginTop: 3 }}>알림&nbsp;&nbsp;&nbsp;사진/카메라&nbsp;&nbsp;&nbsp;연락처</div>
+        {/* 앱 접근 권한 동의 — 수정 모드에선 안 보임(가입 때 이미 동의했으므로 재확인 불필요) */}
+        {!accountEditMode && (
+          <div
+            onClick={() => setPermissionsAgreed((v) => !v)}
+            style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", padding: "4px 2px 20px" }}
+          >
+            <img src={permissionsAgreed ? agreeIcon : nonAgreeIcon} alt="" style={{ width: 20, height: 20, flexShrink: 0, marginTop: 1 }} />
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 500, color: C.black }}>앱 접근 권한에 동의하십니까?</div>
+              <div style={{ fontSize: 12.5, color: C.black, marginTop: 3 }}>알림&nbsp;&nbsp;&nbsp;사진/카메라&nbsp;&nbsp;&nbsp;연락처</div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* 확인 버튼 — 스크롤 영역 밖, 불투명한 고정 자리 */}
       <div style={{ padding: "14px 32px 55px", background: C.bg, flexShrink: 0, display: "flex", justifyContent: "center" }}>
         <div style={{ width: 170 }}>
-          <Btn disabled={!permissionsAgreed} onClick={startOnboardingCategoryFlow} padding="10px 14px">확인</Btn>
+          <Btn disabled={confirmDisabled} onClick={handleConfirm} padding="10px 14px">확인</Btn>
         </div>
       </div>
     </div>
