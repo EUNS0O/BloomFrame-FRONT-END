@@ -9,8 +9,10 @@ import { Btn } from "../components/common/Controls";
 import { BottomNav } from "../components/common/BottomNav";
 import medicineIconWhiteSmall from "../assets/medicine_icon_white_small.png";
 import gymIconWhiteSmall from "../assets/gym_icon_white_small.png";
+import clockIconWhiteSmall from "../assets/clock_icon_white_small.png";
 
-const LIST_ICON = { med: medicineIconWhiteSmall, exercise: gymIconWhiteSmall, other: medicineIconWhiteSmall };
+
+const LIST_ICON = { med: medicineIconWhiteSmall, exercise: gymIconWhiteSmall, other: clockIconWhiteSmall };
 const LABEL = { med: "약", exercise: "운동", other: "기타" };
 
 export default function AlarmList() {
