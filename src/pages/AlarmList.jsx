@@ -5,7 +5,6 @@ import { C } from "../styles/tokens";
 import { fmtTime } from "../utils/format";
 import { TopBar } from "../components/common/Layout";
 import { Btn } from "../components/common/Controls";
-import { BottomButton } from "../components/common/BottomButton";
 import { BottomNav } from "../components/common/BottomNav";
 import medicineIconWhiteSmall from "../assets/medicine_icon_white_small.png";
 import gymIconWhiteSmall from "../assets/gym_icon_white_small.png";
@@ -16,6 +15,7 @@ const LABEL = { med: "약", exercise: "운동", other: "기타" };
 export default function AlarmList() {
   const navigate = useNavigate();
   const { data, setData, setWip, setOnboarding } = useApp();
+  const scrollId = React.useId().replace(/:/g, "");
 
   const removeTime = (categoryId, timeId) => {
     setData((d) => ({
@@ -24,6 +24,7 @@ export default function AlarmList() {
     }));
   };
 
+  // 수정: 해당 카테고리 전체(+ 어떤 시간을 고쳤는지)를 wip에 담아서
   // 약이면 "약 정보 수정 → 알람 설정(시간 목록) → 이미지 선택", 운동/기타면 "알람 설정 → 이미지 선택" 순으로 이어짐
   const editEntry = (category, time) => {
     setOnboarding(false); // 온보딩이 아니라 기존 항목 수정 흐름
@@ -42,9 +43,18 @@ export default function AlarmList() {
   const btnStyle = { padding: "5px 12px", borderRadius: 20, border: "none", background: C.black, color: "#fff", fontSize: 11, fontWeight: 400, cursor: "pointer" };
 
   return (
-    <>
+    <div style={{ height: 890, display: "flex", flexDirection: "column" }}>
       <TopBar />
-      <div style={{ flex: 1, padding: "40px 35px 100px", overflowY: "auto" }}>
+      {/* 스크롤 영역: 제목+리스트만. 확인 버튼 자리는 절대 침범 안 함 */}
+      <div className={`vscroll-${scrollId}`} style={{ flex: 1, minHeight: 0, padding: "40px 35px 0", overflowY: "auto" }}>
+        <style>{`
+          .vscroll-${scrollId} { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+          .vscroll-${scrollId}:hover { scrollbar-color: ${C.grayLine} transparent; }
+          .vscroll-${scrollId}::-webkit-scrollbar { width: 3px; }
+          .vscroll-${scrollId}::-webkit-scrollbar-track { background: transparent; }
+          .vscroll-${scrollId}::-webkit-scrollbar-thumb { background: transparent; border-radius: 4px; }
+          .vscroll-${scrollId}:hover::-webkit-scrollbar-thumb { background: ${C.grayLine}; }
+        `}</style>
         <div style={{ fontSize: 30, fontWeight: 800, marginBottom: 60 }}>알림 목록</div>
 
         {data.categories.flatMap((c) =>
@@ -70,12 +80,15 @@ export default function AlarmList() {
             </div>
           ))
         )}
+      </div>
 
-        <BottomButton variant="high">
+      {/* 확인 버튼 — 스크롤 영역 밖, 불투명한 고정 자리. BottomNav 바로 위 */}
+      <div style={{ padding: "14px 35px 20px", background: C.bg, flexShrink: 0, display: "flex", justifyContent: "center" }}>
+        <div style={{ width: 170 }}>
           <Btn onClick={() => navigate(-1)} padding="10px 14px">확인</Btn>
-        </BottomButton>
+        </div>
       </div>
       <BottomNav />
-    </>
+    </div>
   );
 }

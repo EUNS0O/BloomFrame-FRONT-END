@@ -19,7 +19,7 @@ export default function MedList() {
   };
 
   return (
-    <>
+    <div style={{ height: 890, display: "flex", flexDirection: "column" }}>
       <TopBar />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
         <div style={{ padding: "40px 35px 0" }}>
@@ -73,6 +73,6 @@ export default function MedList() {
         </div>
       </div>
       <BottomNav />
-    </>
+    </div>
   );
 }
