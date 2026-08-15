@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import { C } from "../styles/tokens";
@@ -8,6 +8,7 @@ import { Btn } from "../components/common/Controls";
 import { BottomButton } from "../components/common/BottomButton";
 import { ImageGrid } from "../components/widgets/ImageGrid";
 import { BottomNav } from "../components/common/BottomNav";
+import { Toast } from "../components/common/Toast";
 import plant1 from "../assets/plants/plant_1.png";
 import plant2 from "../assets/plants/plant_2.webp";
 import plant3 from "../assets/plants/plant_3.webp";
@@ -25,12 +26,16 @@ const DEFAULT_PLANT_INDEX = 0; // 실제로 동작하는 유일한 식물의 칸
 export default function ImageSelect() {
   const navigate = useNavigate();
   const { onboarding, wip, setWip, setData, imageOnly, setImageOnly } = useApp();
+  const [toastVisible, setToastVisible] = useState(false);
+  const toastTimer = useRef(null);
 
   if (!wip) return null;
 
-  // 아직 실제로 구현 안 된 식물을 골랐을 때 — 알림창 디자인은 나중에 받으면 교체 예정, 지금은 임시 alert
+  // 아직 실제로 구현 안 된 식물을 골랐을 때 — 잠깐 떴다가 2초 뒤 자동으로 사라짐
   const showComingSoon = () => {
-    alert("준비 중입니다");
+    setToastVisible(true);
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToastVisible(false), 2000);
   };
 
   // 마이페이지 "이미지 바꾸기"로 들어온 경우: 카테고리에 반영하지 않고 표시용 이미지만 갱신
@@ -45,6 +50,7 @@ export default function ImageSelect() {
     return (
       <>
         <TopBar />
+        <Toast message="아직 준비 중인 이미지입니다" visible={toastVisible} />
         <div style={{ flex: 1, padding: "40px 35px 100px", overflowY: "auto" }}>
           <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 10 }}>이미지 선택</div>
           <div style={{ fontSize: 17, color: C.gray, lineHeight: 1.6, fontWeight: 500 }}>
@@ -71,6 +77,7 @@ export default function ImageSelect() {
 
   return (
     <div style={{ flex: 1, padding: "0 30px 100px", overflowY: "auto" }}>
+      <Toast message="아직 준비 중인 이미지입니다" visible={toastVisible} />
       <BackHeader progress={onboarding ? 100 : undefined} />
       <div style={{ fontSize: 24, fontWeight: 800, marginTop: 40, marginBottom: 10, paddingLeft: 12 }}>이미지 선택</div>
       <div style={{ fontSize: 15, color: C.gray, lineHeight: 1.6, paddingLeft: 12, fontWeight: 500 }}>
