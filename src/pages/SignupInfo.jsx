@@ -6,7 +6,7 @@ import { BackHeader } from "../components/common/BackHeader";
 import { Btn, Field } from "../components/common/Controls";
 import { BottomButton } from "../components/common/BottomButton";
 
-const FIELD_MB = 22; // 필드 사이 간격 (조절용)
+const FIELD_MB = 20; // 필드 사이 간격 (조절용)
 
 export default function SignupInfo() {
   const navigate = useNavigate();
@@ -25,15 +25,19 @@ export default function SignupInfo() {
     placeholderColor: C.linkGray,
     marginBottom: FIELD_MB,
     width: "95%",
+    borderColor: C.black,
+    borderRadius: 6,
+    padding: "7px 14px",
+    labelFontSize: 15,
   };
 
   const showPhoneVerifyButton = phoneFocused && !data.phoneVerifying;
 
   return (
-    <div style={{ flex: 1, padding: "0 24px 100px", overflowY: "auto" }}>
+    <div style={{ flex: 1, padding: "0 32px 100px", overflowY: "auto" }}>
       <BackHeader progress={40} />
       <div style={{ fontSize: 24, fontWeight: 800, marginTop: 20, marginBottom: 8 }}>회원 정보 입력</div>
-      <div style={{ fontSize: 13.5, color: C.gray, lineHeight: 1.6, marginBottom: 32 }}>
+      <div style={{ fontSize: 13.5, color: C.gray, lineHeight: 1.6, marginBottom: 28 }}>
         시니어 · 본인 공통 정보를 입력해 주세요
       </div>
 

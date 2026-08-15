@@ -23,11 +23,11 @@ export function Btn({ children, onClick, variant = "primary", disabled, icon: Ic
   );
 }
 
-export function Field({ label, textColor, placeholderColor, bg, borderColor, marginBottom, ...props }) {
+export function Field({ label, labelFontSize = 13.5, textColor, placeholderColor, bg, borderColor, borderRadius = 12, padding = "13px 14px", marginBottom, ...props }) {
   const uid = React.useId().replace(/:/g, "");
   return (
     <div style={{ marginBottom: marginBottom ?? 16 }}>
-      {label && <div style={{ fontSize: 13.5, fontWeight: 700, color: C.black, marginBottom: 8 }}>{label}</div>}
+      {label && <div style={{ fontSize: labelFontSize, fontWeight: 700, color: C.black, marginBottom: 8 }}>{label}</div>}
       {placeholderColor && (
         <style>{`.f-${uid}::placeholder { color: ${placeholderColor}; }`}</style>
       )}
@@ -35,7 +35,7 @@ export function Field({ label, textColor, placeholderColor, bg, borderColor, mar
         {...props}
         className={`f-${uid}`}
         style={{
-          width: "100%", boxSizing: "border-box", padding: "13px 14px", borderRadius: 12,
+          width: "100%", boxSizing: "border-box", padding, borderRadius,
           border: `1px solid ${borderColor || C.grayLine}`, background: bg || C.field, fontSize: 14.5, color: textColor || C.black, outline: "none",
         }}
       />
