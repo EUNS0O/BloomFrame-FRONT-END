@@ -19,7 +19,7 @@ import AlarmList from "./pages/AlarmList";
 import IotHome from "./pages/IotHome";
 import IotConnect from "./pages/IotConnect";
 import IotDevices from "./pages/IotDevices";
-import IoTDeviceEdit from "./pages/IotDeviceEdit";
+import IoTDeviceEdit from "./pages/IoTDeviceEdit";
 import MyPage from "./pages/MyPage";
 import MedList from "./pages/MedList";
 import Guide from "./pages/Guide";
