@@ -7,20 +7,22 @@ import { TopBar } from "../components/common/Layout";
 import { Btn } from "../components/common/Controls";
 import { BottomButton } from "../components/common/BottomButton";
 import { BottomNav } from "../components/common/BottomNav";
+import { getTodaySchedule, getAlarmStatus } from "../utils/alarmStatus";
+import { getRecord } from "../utils/historyStore";
 import medicineIconGreen from "../assets/medicine_icon_green.png";
 import medicineIconRed from "../assets/medicine_icon_red.png";
 import medicineIconSmall from "../assets/medicine_icon_small.png";
 import gymIconSmall from "../assets/gym_icon_small.png";
+import gymIconGreen from "../assets/gym_icon_green.webp";
+import gymIconRed from "../assets/gym_icon_red.webp";
+import clockIconGreen from "../assets/clock_icon_green.webp";
+import clockIconRed from "../assets/clock_icon_red.webp";
 
 const PENDING_ICON = { med: medicineIconSmall, exercise: gymIconSmall, other: medicineIconSmall };
+const SUCCESS_ICON = { med: medicineIconGreen, exercise: gymIconGreen, other: clockIconGreen };
+const MISSED_ICON = { med: medicineIconRed, exercise: gymIconRed, other: clockIconRed };
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 const WEEKS_IN_GRID = 6;
-
-const MOCK_RECORDS = {
-  "2026-8-1": ["done", "missed", "pending", "pending"],
-  "2026-8-5": ["done", "done", "done", "missed"],
-  "2026-8-12": ["missed", "missed", "pending", "pending"],
-};
 
 const today = new Date();
 
@@ -45,15 +47,20 @@ export default function History() {
   const firstWeekday = new Date(viewYear, viewMonth, 1).getDay();
   const totalCells = WEEKS_IN_GRID * 7;
 
-  const recordKey = `${selected.year}-${selected.month + 1}-${selected.day}`;
-  const record = MOCK_RECORDS[recordKey] || ["pending", "pending", "pending", "pending"];
+  const isSelectedToday = selected.year === today.getFullYear() && selected.month === today.getMonth() && selected.day === today.getDate();
 
-  const allTypes = [];
-  data.categories.forEach((c) => c.times.forEach(() => allTypes.push(c.type)));
-  const iconData = record.map((status, i) => ({
-    status,
-    type: allTypes[i] || "med",
-  }));
+  // 오늘이면 Home.jsx와 똑같이 실시간으로 계산, 그 외 날짜는 저장된 스냅샷(localStorage)을 조회
+  let iconData;
+  if (isSelectedToday) {
+    const todaySchedule = getTodaySchedule(data.categories);
+    iconData = todaySchedule.map((entry) => ({
+      type: entry.label,
+      status: getAlarmStatus(entry, data.verifications, new Date()),
+    }));
+  } else {
+    const stored = getRecord(selected.year, selected.month, selected.day);
+    iconData = stored || []; // 기록이 없으면 빈 배열 (그 날은 앱을 안 썼다는 뜻)
+  }
 
   return (
     <>
@@ -104,18 +111,24 @@ export default function History() {
         </div>
 
         <div style={{ fontWeight: 700, marginBottom: 16, marginLeft: 12 }}>{selected.month + 1}월 {selected.day}일</div>
-        <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 42, marginLeft: 40, marginBottom: 30, width: "max-content" }}>
-          {iconData.length > 1 && (
-            <div style={{ position: "absolute", left: 40, right: 40, top: "50%", transform: "translateY(-50%)", height: 1, background: C.grayLine, zIndex: 0 }} />
-          )}
-          {iconData.map((d, i) => {
-            let icon;
-            if (d.status === "done") icon = medicineIconGreen;
-            else if (d.status === "missed") icon = medicineIconRed;
-            else icon = PENDING_ICON[d.type] || medicineIconSmall;
-            return <img key={i} src={icon} alt="" style={{ width: 40, height: 40, position: "relative", zIndex: 1, display: "block", flexShrink: 0 }} />;
-          })}
-        </div>
+        {iconData.length === 0 ? (
+          <div style={{ fontSize: 13, color: C.gray, marginLeft: 12, marginBottom: 30 }}>
+            {isSelectedToday ? "오늘 등록된 알림이 없어요." : "이 날짜엔 기록이 없어요."}
+          </div>
+        ) : (
+          <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 42, marginLeft: 40, marginBottom: 30, width: "max-content" }}>
+            {iconData.length > 1 && (
+              <div style={{ position: "absolute", left: 40, right: 40, top: "50%", transform: "translateY(-50%)", height: 1, background: C.grayLine, zIndex: 0 }} />
+            )}
+            {iconData.map((d, i) => {
+              let icon;
+              if (d.status === "success") icon = SUCCESS_ICON[d.type] || SUCCESS_ICON.other;
+              else if (d.status === "missed") icon = MISSED_ICON[d.type] || MISSED_ICON.other;
+              else icon = PENDING_ICON[d.type] || PENDING_ICON.other;
+              return <img key={i} src={icon} alt="" style={{ width: 40, height: 40, position: "relative", zIndex: 1, display: "block", flexShrink: 0 }} />;
+            })}
+          </div>
+        )}
 
         <BottomButton variant="medium">
           <Btn onClick={() => navigate(-1)} padding="10px 14px">확인</Btn>

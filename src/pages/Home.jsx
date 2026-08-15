@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import { C } from "../styles/tokens";
+import { getTodaySchedule, getAlarmStatus } from "../utils/alarmStatus";
+import { saveTodayRecord } from "../utils/historyStore";
 import { TopBar } from "../components/common/Layout";
 import { Card } from "../components/common/Controls";
 import { BottomNav } from "../components/common/BottomNav";
@@ -9,12 +11,18 @@ import medicineIconGreen from "../assets/medicine_icon_green.png";
 import medicineIconRed from "../assets/medicine_icon_red.png";
 import medicineIconSmall from "../assets/medicine_icon_small.png";
 import gymIconSmall from "../assets/gym_icon_small.png";
+import gymIconGreen from "../assets/gym_icon_green.webp";
+import gymIconRed from "../assets/gym_icon_red.webp";
+import clockIconGreen from "../assets/clock_icon_green.webp";
+import clockIconRed from "../assets/clock_icon_red.webp";
 import medicineIconWhiteSmall from "../assets/medicine_icon_white_small.png";
 import gymIconWhiteSmall from "../assets/gym_icon_white_small.png";
 import rightSmall from "../assets/right_small.png";
 
-// 카테고리 타입별 아이콘/라벨 매핑 (기타는 별도 아이콘이 아직 없어 medicine 아이콘으로 대체)
+// 카테고리 타입별 아이콘 매핑 — 대기(회색 배지) / 성공(초록) / 실패(빨강)
 const PENDING_ICON = { med: medicineIconSmall, exercise: gymIconSmall, other: medicineIconSmall };
+const SUCCESS_ICON = { med: medicineIconGreen, exercise: gymIconGreen, other: clockIconGreen };
+const MISSED_ICON = { med: medicineIconRed, exercise: gymIconRed, other: clockIconRed };
 const LIST_ICON = { med: medicineIconWhiteSmall, exercise: gymIconWhiteSmall, other: medicineIconWhiteSmall };
 const LABEL = { med: "약", exercise: "운동", other: "기타" };
 
@@ -22,6 +30,13 @@ export default function Home() {
   const navigate = useNavigate();
   const { data, setOnboarding, setWip } = useApp();
   const scrollId = React.useId().replace(/:/g, "");
+  const [now, setNow] = useState(new Date());
+
+  // 1분마다 갱신 — "대기"였던 알림이 10분 지나 "실패"로 바뀌는 걸 화면에 반영하기 위함
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const startAddAlarm = () => {
     setOnboarding(false);
@@ -37,18 +52,18 @@ export default function Home() {
     else grouped.push({ type: c.type, count: c.times.length });
   });
 
-  // 실제 등록된 알림(카테고리별 시간)을 등록 순서대로 펼쳐서 아이콘 목록 생성
-  // 완료/미완료 여부는 백엔드 인증 로그(GET /api/verifications) 연동 전까지는 mock 데이터를 순서대로 재사용하고,
-  // 그 외는 전부 '예정(pending)'으로 표시합니다.
-  const mockStatuses = data.logs[0]?.statuses || [];
-  const allSlots = [];
-  data.categories.forEach((c) => {
-    c.times.forEach(() => allSlots.push({ type: c.type }));
-  });
-  const iconData = allSlots.map((slot, i) => ({
-    type: slot.type,
-    status: mockStatuses[i] || "pending",
+  // 오늘자 실제 알림을 시간순으로 계산하고, 각각 진짜 상태(대기/성공/실패)를 판정
+  // IotDisplay.jsx에서 인증에 성공하면 AppContext(data.verifications)에 기록되고, 여기서 그걸 그대로 읽음
+  const todaySchedule = getTodaySchedule(data.categories);
+  const iconData = todaySchedule.map((entry) => ({
+    type: entry.label,
+    status: getAlarmStatus(entry, data.verifications, now), // "pending" | "success" | "missed"
   }));
+
+  // 오늘자 실제 상태를 매번 스냅샷으로 저장 — History.jsx가 나중에 "이전 기록"으로 조회함
+  useEffect(() => {
+    if (iconData.length > 0) saveTodayRecord(iconData);
+  }, [JSON.stringify(iconData)]);
 
   return (
     <>
@@ -75,9 +90,9 @@ export default function Home() {
               )}
               {iconData.map((d, i) => {
                 let icon;
-                if (d.status === "done") icon = medicineIconGreen;
-                else if (d.status === "missed") icon = medicineIconRed;
-                else icon = PENDING_ICON[d.type] || medicineIconSmall;
+                if (d.status === "success") icon = SUCCESS_ICON[d.type] || SUCCESS_ICON.other;
+                else if (d.status === "missed") icon = MISSED_ICON[d.type] || MISSED_ICON.other;
+                else icon = PENDING_ICON[d.type] || PENDING_ICON.other;
                 return <img key={i} src={icon} alt="" style={{ width: 40, height: 40, position: "relative", zIndex: 1, display: "block", flexShrink: 0 }} />;
               })}
             </div>

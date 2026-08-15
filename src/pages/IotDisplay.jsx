@@ -68,7 +68,7 @@ function toTodayDate(t) {
 }
 
 export default function IotDisplay() {
-  const { data } = useApp();
+  const { data, update } = useApp();
   const [searchParams] = useSearchParams();
   const scrollId = React.useId().replace(/:/g, "");
 
@@ -176,6 +176,10 @@ export default function IotDisplay() {
     if (!activeAlarmKey) return;
     resolvedKeys.current.add(activeAlarmKey);
     outcomes.current.set(activeAlarmKey, "success");
+    // 테스트 모드(testIn/cardsTest)의 가짜 키는 실제 데이터를 오염시키지 않게 공유 상태에 안 씀
+    if (!testIn && !cardsTest) {
+      update({ verifications: { ...data.verifications, [activeAlarmKey]: "success" } });
+    }
     setAlarmPhase(null);
     setActiveAlarmKey(null);
     if (plantState === "WILTED") setTransition("toBloom");
