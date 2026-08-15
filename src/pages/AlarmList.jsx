@@ -24,7 +24,6 @@ export default function AlarmList() {
     }));
   };
 
-  // 수정: 해당 카테고리 전체(+ 어떤 시간을 고쳤는지)를 wip에 담아서
   // 약이면 "약 정보 수정 → 알람 설정(시간 목록) → 이미지 선택", 운동/기타면 "알람 설정 → 이미지 선택" 순으로 이어짐
   const editEntry = (category, time) => {
     setOnboarding(false); // 온보딩이 아니라 기존 항목 수정 흐름

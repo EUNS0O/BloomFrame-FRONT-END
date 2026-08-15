@@ -1,13 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import { C } from "../styles/tokens";
 import { CATEGORY_META } from "../constants/categoryMeta";
 import { nextId } from "../utils/format";
 import { TopBar } from "../components/common/Layout";
 import { BackHeader } from "../components/common/BackHeader";
-import { Card, Btn } from "../components/common/Controls";
+import { Btn } from "../components/common/Controls";
 import { BottomNav } from "../components/common/BottomNav";
 import { BottomButton } from "../components/common/BottomButton";
 import rightIcon from "../assets/right_icon.png";
@@ -48,28 +47,44 @@ export default function CategorySelect() {
     }, 180);
   };
 
-  // 홈 화면 "+ 알람 추가하기"로 들어온 경우 (온보딩 아님): 앱 셸(TopBar/BottomNav) 있는 화면
+  // 홈 화면 "+ 알람 추가하기"로 들어온 경우 (온보딩 아님): 앱 셸(TopBar/BottomNav) + 온보딩과 동일한 카드 디자인
   if (!onboarding) {
     return (
       <>
         <TopBar />
-        <div style={{ flex: 1, padding: "20px 24px" }}>
-          <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 6 }}>알림 카테고리 추가</div>
-          <div style={{ fontSize: 13, color: C.gray, marginBottom: 18 }}>다른 항목도 추가로 설정할 수 있어요</div>
-          {Object.entries(CATEGORY_META).map(([key, meta]) => (
-            <Card key={key} onClick={() => pickCategory(key)}>
-              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <meta.icon size={18} />
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+          <div style={{ padding: "40px 35px 0" }}>
+            <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 6 }}>알림 카테고리 추가</div>
+            <div style={{ fontSize: 14, color: C.gray, lineHeight: 1.6, fontWeight: 500, marginBottom: 28 }}>
+              다른 항목도 추가로 설정할 수 있어요
+            </div>
+          </div>
+
+          <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "0 35px 40px" }}>
+            {Object.entries(CATEGORY_META).map(([key, meta]) => {
+              const active = selected === key;
+              return (
+                <div
+                  key={key}
+                  onClick={() => pickCategory(key)}
+                  style={{
+                    background: active ? CARD_BG_ACTIVE : CARD_BG, borderRadius: 8, padding: "35px 18px", display: "flex", alignItems: "center",
+                    justifyContent: "space-between", cursor: "pointer", width: "100%", marginBottom: 20,
+                    transition: "background 0.15s", boxSizing: "border-box",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+                    <img src={active ? ICONS[key].white : ICONS[key].normal} alt="" style={{ width: 56, height: 56, flexShrink: 0 }} />
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 17, color: active ? "#fff" : C.black }}>{meta.label}</div>
+                      <div style={{ fontSize: 13, color: active ? "#fff" : C.black, marginTop: 3 }}>{meta.desc}</div>
+                    </div>
+                  </div>
+                  <img src={active ? rightIconWhite : rightIcon} alt="" style={{ width: 15, height: "auto" }} />
                 </div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 15 }}>{meta.label}</div>
-                  <div style={{ fontSize: 12, color: C.gray }}>{meta.desc}</div>
-                </div>
-              </div>
-              <ChevronRight size={18} />
-            </Card>
-          ))}
+              );
+            })}
+          </div>
         </div>
         <BottomNav />
       </>
