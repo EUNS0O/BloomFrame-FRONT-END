@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import { C } from "../styles/tokens";
 import { fmtTime } from "../utils/format";
+import { getTodaySchedule } from "../utils/alarmStatus";
 import { TopBar } from "../components/common/Layout";
 import { Btn } from "../components/common/Controls";
 import { BottomNav } from "../components/common/BottomNav";
@@ -57,29 +58,36 @@ export default function AlarmList() {
         `}</style>
         <div style={{ fontSize: 30, fontWeight: 800, marginBottom: 60 }}>알림 목록</div>
 
-        {data.categories.flatMap((c) =>
-          c.times.map((t) => (
-            <div
-              key={t.id}
-              style={{
-                background: C.field, borderRadius: 5, height: 70, boxSizing: "border-box",
-                padding: "0 12px", marginBottom: 15, display: "flex", alignItems: "center", justifyContent: "space-between",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <img src={LIST_ICON[c.type]} alt="" style={{ width: 32, height: 32 }} />
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 15 }}>{LABEL[c.type]}</div>
-                  <div style={{ fontSize: 12, color: C.black }}>{fmtTime(t)} · 진행 중</div>
+        {(() => {
+          // key(`${categoryId}-${timeId}`) → {카테고리, 시간} 원본 찾기용 맵
+          const lookup = {};
+          data.categories.forEach((c) => c.times.forEach((t) => { lookup[`${c.id}-${t.id}`] = { c, t }; }));
+
+          return getTodaySchedule(data.categories).map(({ key }) => {
+            const { c, t } = lookup[key];
+            return (
+              <div
+                key={t.id}
+                style={{
+                  background: C.field, borderRadius: 5, height: 70, boxSizing: "border-box",
+                  padding: "0 12px", marginBottom: 15, display: "flex", alignItems: "center", justifyContent: "space-between",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <img src={LIST_ICON[c.type]} alt="" style={{ width: 32, height: 32 }} />
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 15 }}>{LABEL[c.type]}</div>
+                    <div style={{ fontSize: 12, color: C.black }}>{fmtTime(t)} · 진행 중</div>
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button style={btnStyle} onClick={() => editEntry(c, t)}>수정</button>
+                  <button onClick={() => removeTime(c.id, t.id)} style={btnStyle}>삭제</button>
                 </div>
               </div>
-              <div style={{ display: "flex", gap: 6 }}>
-                <button style={btnStyle} onClick={() => editEntry(c, t)}>수정</button>
-                <button onClick={() => removeTime(c.id, t.id)} style={btnStyle}>삭제</button>
-              </div>
-            </div>
-          ))
-        )}
+            );
+          });
+        })()}
       </div>
 
       {/* 확인 버튼 — 스크롤 영역 밖, 불투명한 고정 자리. BottomNav 바로 위 */}

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import { C } from "../styles/tokens";
 import { fmtTime } from "../utils/format";
+import { toTodayDate } from "../utils/alarmStatus";
 import { BackHeader } from "../components/common/BackHeader";
 import { Btn } from "../components/common/Controls";
 import medicineIconBlack from "../assets/medicine_icon_black.png";
@@ -23,6 +24,8 @@ export default function TimeList() {
   if (!wip) return null;
   const icon = ICON_BLACK[wip.type];
   const times = wip.times || []; // 방어: times가 없는 상태로 들어와도 크래시 방지
+  // 등록 순서가 아니라 실제 시간순으로 "1회차/2회차..."가 매겨지도록 표시용 정렬(원본 배열은 안 건드림)
+  const sortedTimes = [...times].sort((a, b) => toTodayDate(a) - toTodayDate(b));
 
   const addTime = () => {
     setWip((w) => ({ ...w, draftTime: { hour: 1, minute: 0, ampm: "오전" }, editingTimeId: null }));
@@ -52,7 +55,7 @@ export default function TimeList() {
           알려드릴 시간을 확인해 주세요
         </div>
 
-        {times.map((t, i) => (
+        {sortedTimes.map((t, i) => (
           <div
             key={t.id}
             style={{
