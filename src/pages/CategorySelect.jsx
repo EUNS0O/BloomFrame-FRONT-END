@@ -55,7 +55,7 @@ export default function CategorySelect() {
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
           <div style={{ padding: "40px 35px 0" }}>
             <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 6 }}>알림 카테고리 추가</div>
-            <div style={{ fontSize: 14, color: C.gray, lineHeight: 1.6, fontWeight: 500, marginBottom: 28 }}>
+            <div style={{ fontSize: 14, color: C.gray, lineHeight: 1.6, fontWeight: 500, marginBottom: 70 }}>
               다른 항목도 추가로 설정할 수 있어요
             </div>
           </div>
@@ -97,7 +97,7 @@ export default function CategorySelect() {
       <div style={{ flex: 1, padding: "0 30px 100px", overflowY: "auto" }}>
         <BackHeader />
         <div style={{ fontSize: 24, fontWeight: 800, marginTop: 40, marginBottom: 10, paddingLeft: 12 }}>알림 카테고리 추가</div>
-        <div style={{ fontSize: 15, color: C.gray, lineHeight: 1.6, marginBottom: 100, paddingLeft: 12, fontWeight: 500 }}>
+        <div style={{ fontSize: 15, color: C.gray, lineHeight: 1.6, marginBottom: 70, paddingLeft: 12, fontWeight: 500 }}>
           다른 항목도 추가로 설정할 수 있어요
         </div>
 
@@ -140,7 +140,7 @@ export default function CategorySelect() {
         progress={60}
       />
       <div style={{ fontSize: 24, fontWeight: 800, marginTop: 40, marginBottom: 10, paddingLeft: 12 }}>알림 카테고리 선택</div>
-      <div style={{ fontSize: 15, color: C.gray, lineHeight: 1.6, marginBottom: 100, paddingLeft: 12, fontWeight: 500 }}>
+      <div style={{ fontSize: 15, color: C.gray, lineHeight: 1.6, marginBottom: 70, paddingLeft: 12, fontWeight: 500 }}>
         알려드릴 항목을 선택해 주세요
       </div>
 
