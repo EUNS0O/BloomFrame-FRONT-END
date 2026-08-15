@@ -22,6 +22,7 @@ const editBtnStyle = { padding: "3px 12px", borderRadius: 20, border: "none", ba
 export default function MyPage() {
   const navigate = useNavigate();
   const { data, update, setWip, setImageOnly, resetAll } = useApp();
+  const scrollId = React.useId().replace(/:/g, "");
 
   const changeImage = () => {
     setImageOnly(true);
@@ -39,11 +40,20 @@ export default function MyPage() {
       <TopBar />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
         <div style={{ padding: "40px 35px 0" }}>
-          <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 40 }}>마이페이지</div>
+          <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 30 }}>마이페이지</div>
         </div>
 
-        <div style={{ flex: 1, overflowY: "auto", padding: "0 35px 40px" }}>
-          <div style={{ background: C.black, color: "#fff", borderRadius: 9, padding: "27px 19px", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 40 }}>
+        <style>{`
+          .mypage-scroll-${scrollId} { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+          .mypage-scroll-${scrollId}:hover { scrollbar-color: ${C.grayLine} transparent; }
+          .mypage-scroll-${scrollId}::-webkit-scrollbar { width: 3px; }
+          .mypage-scroll-${scrollId}::-webkit-scrollbar-track { background: transparent; }
+          .mypage-scroll-${scrollId}::-webkit-scrollbar-thumb { background: transparent; border-radius: 4px; }
+          .mypage-scroll-${scrollId}:hover::-webkit-scrollbar-thumb { background: ${C.grayLine}; }
+        `}</style>
+
+        <div className={`mypage-scroll-${scrollId}`} style={{ flex: 1, overflowY: "auto", padding: "0 35px 0px" }}>
+          <div style={{ background: C.black, color: "#fff", borderRadius: 9, padding: "27px 19px", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 34 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{ width: 50, height: 50, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <img src={cloverOrange} alt="" style={{ width: 50, height: 50 }} />
@@ -105,7 +115,7 @@ export default function MyPage() {
             </div>
             <img src={rightSmall} alt="" style={{ width: 8, height: "auto" }} />
           </Card>
-          <Card onClick={logout} borderRadius={8} padding="10px 18px">
+          <Card onClick={logout} borderRadius={8} padding="10px 18px" marginBottom={-30}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <img src={iconLogout} alt="" style={{ width: 26, height: 26 }} />
               <span style={{ fontWeight: 600, fontSize: 15 }}>로그아웃</span>
