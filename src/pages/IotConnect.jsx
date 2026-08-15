@@ -14,9 +14,11 @@ export default function IotConnect() {
   const [code, setCode] = useState("");
 
   const handleConfirm = () => {
+    const trimmed = code.trim();
+    if (!trimmed) return;
     setData((d) => ({
       ...d,
-      devices: [...d.devices, { id: nextId(), name: `IoT_${d.devices.length + 1}`, desc: `시리얼 코드 ${code} 로 연결되었습니다` }],
+      devices: [...d.devices, { id: nextId(), name: `IoT_${d.devices.length + 1}`, desc: `시리얼 코드 ${trimmed} 로 연결되었습니다` }],
     }));
     setCode("");
     navigate(-1);
@@ -36,7 +38,7 @@ export default function IotConnect() {
         />
 
         <BottomButton variant="high">
-          <Btn disabled={!code} onClick={handleConfirm}>확인</Btn>
+          <Btn disabled={!code.trim()} onClick={handleConfirm}>확인</Btn>
         </BottomButton>
       </div>
       <BottomNav />
