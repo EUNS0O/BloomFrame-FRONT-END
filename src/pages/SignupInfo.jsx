@@ -4,6 +4,8 @@ import { C } from "../styles/tokens";
 import { useApp } from "../context/AppContext";
 import { BackHeader } from "../components/common/BackHeader";
 import { Btn, Field } from "../components/common/Controls";
+import agreeIcon from "../assets/agree.png";
+import nonAgreeIcon from "../assets/non_agree.png";
 
 const FIELD_MB = 20; // 필드 사이 간격 (조절용)
 
@@ -11,6 +13,7 @@ export default function SignupInfo() {
   const navigate = useNavigate();
   const { data, update, setOnboarding, setWip } = useApp();
   const [phoneFocused, setPhoneFocused] = useState(false);
+  const [permissionsAgreed, setPermissionsAgreed] = useState(false);
   const scrollId = React.useId().replace(/:/g, "");
 
   const startOnboardingCategoryFlow = () => {
@@ -82,12 +85,24 @@ export default function SignupInfo() {
         <Field label="이메일" placeholder="BloomFrame@email.com" value={data.email} onChange={(e) => update({ email: e.target.value })} {...fieldProps} />
         <Field label="비밀번호" type="password" placeholder="••••••••" value={data.password} onChange={(e) => update({ password: e.target.value })} {...fieldProps} />
         <Field label="비밀번호 확인" type="password" placeholder="••••••••" value={data.passwordConfirm} onChange={(e) => update({ passwordConfirm: e.target.value })} {...fieldProps} marginBottom={20} />
+
+        {/* 앱 접근 권한 동의 */}
+        <div
+          onClick={() => setPermissionsAgreed((v) => !v)}
+          style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", padding: "4px 2px 20px" }}
+        >
+          <img src={permissionsAgreed ? agreeIcon : nonAgreeIcon} alt="" style={{ width: 20, height: 20, flexShrink: 0, marginTop: 1 }} />
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 500, color: C.black }}>앱 접근 권한에 동의하십니까?</div>
+            <div style={{ fontSize: 12.5, color: C.black, marginTop: 3 }}>알림&nbsp;&nbsp;&nbsp;사진/카메라&nbsp;&nbsp;&nbsp;연락처</div>
+          </div>
+        </div>
       </div>
 
       {/* 확인 버튼 — 스크롤 영역 밖, 불투명한 고정 자리 */}
       <div style={{ padding: "14px 32px 55px", background: C.bg, flexShrink: 0, display: "flex", justifyContent: "center" }}>
         <div style={{ width: 170 }}>
-          <Btn onClick={startOnboardingCategoryFlow} padding="10px 14px">확인</Btn>
+          <Btn disabled={!permissionsAgreed} onClick={startOnboardingCategoryFlow} padding="10px 14px">확인</Btn>
         </div>
       </div>
     </div>
