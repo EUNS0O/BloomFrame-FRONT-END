@@ -10,7 +10,7 @@ export function Toast({ message, visible }) {
         opacity: visible ? 1 : 0,
         transition: "opacity 0.25s ease, transform 0.25s ease",
         pointerEvents: "none",
-        background: "rgba(255, 255, 255, 0.85)", borderRadius: 10, padding: "40px 62px", minWidth: 220,
+        background: "#F3F3F3CC", borderRadius: 10, padding: "40px 62px", minWidth: 220,
         boxShadow: "0 2px 2px rgba(0,0,0,0.15)",
         whiteSpace: "nowrap", textAlign: "center",
       }}
