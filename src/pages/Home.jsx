@@ -7,23 +7,25 @@ import { saveTodayRecord } from "../utils/historyStore";
 import { TopBar } from "../components/common/Layout";
 import { Card } from "../components/common/Controls";
 import { BottomNav } from "../components/common/BottomNav";
-import medicineIconGreen from "../assets/medicine_icon_green.png";
-import medicineIconRed from "../assets/medicine_icon_red.png";
-import medicineIconSmall from "../assets/medicine_icon_small.png";
-import gymIconSmall from "../assets/gym_icon_small.png";
+import medicineIconGreen from "../assets/medicine_icon_green.webp";
+import medicineIconRed from "../assets/medicine_icon_red.webp";
+import medicineIconSmall from "../assets/medicine_icon_small.webp";
+import gymIconSmall from "../assets/gym_icon_small.webp";
+import clockIconSmall from "../assets/clock_icon_small.webp";
 import gymIconGreen from "../assets/gym_icon_green.webp";
 import gymIconRed from "../assets/gym_icon_red.webp";
 import clockIconGreen from "../assets/clock_icon_green.webp";
 import clockIconRed from "../assets/clock_icon_red.webp";
 import medicineIconWhiteSmall from "../assets/medicine_icon_white_small.png";
 import gymIconWhiteSmall from "../assets/gym_icon_white_small.png";
+import clockIconWhiteSmall from "../assets/clock_icon_white_small.png";
 import rightSmall from "../assets/right_small.png";
 
 // 카테고리 타입별 아이콘 매핑 — 대기(회색 배지) / 성공(초록) / 실패(빨강)
-const PENDING_ICON = { med: medicineIconSmall, exercise: gymIconSmall, other: medicineIconSmall };
+const PENDING_ICON = { med: medicineIconSmall, exercise: gymIconSmall, other: clockIconSmall };
 const SUCCESS_ICON = { med: medicineIconGreen, exercise: gymIconGreen, other: clockIconGreen };
 const MISSED_ICON = { med: medicineIconRed, exercise: gymIconRed, other: clockIconRed };
-const LIST_ICON = { med: medicineIconWhiteSmall, exercise: gymIconWhiteSmall, other: medicineIconWhiteSmall };
+const LIST_ICON = { med: medicineIconWhiteSmall, exercise: gymIconWhiteSmall, other: clockIconWhiteSmall };
 const LABEL = { med: "약", exercise: "운동", other: "기타" };
 
 export default function Home() {
