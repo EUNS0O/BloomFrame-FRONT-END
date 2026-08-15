@@ -55,7 +55,7 @@ function PhoneApp() {
         <Route path="/iot" element={<IotHome />} />
         <Route path="/iot/connect" element={<IotConnect />} />
         <Route path="/iot/manage" element={<IotDevices />} />
-        <Route path="/iot/manage/edit/:id" element={<IotDeviceEdit />} />
+        <Route path="/iot/manage/edit/:id" element={<IoTDeviceEdit />} />
         <Route path="/iot/list" element={<IotDevices />} />
 
         <Route path="/mypage" element={<MyPage />} />
