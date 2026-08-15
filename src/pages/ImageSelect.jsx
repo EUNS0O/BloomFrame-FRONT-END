@@ -52,7 +52,7 @@ export default function ImageSelect() {
 
   return (
     <div style={{ flex: 1, padding: "0 30px 100px", overflowY: "auto" }}>
-      <BackHeader progress={onboarding ? 100 : undefined} hideBack />
+      <BackHeader progress={onboarding ? 100 : undefined} />
       <div style={{ fontSize: 24, fontWeight: 800, marginTop: 40, marginBottom: 10, paddingLeft: 12 }}>이미지 선택</div>
       <div style={{ fontSize: 15, color: C.gray, lineHeight: 1.6, paddingLeft: 12, fontWeight: 500 }}>
         IoT 스크린에 들어갈 이미지를 선택해 주세요

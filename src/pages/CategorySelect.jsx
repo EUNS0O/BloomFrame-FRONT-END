@@ -80,7 +80,7 @@ export default function CategorySelect() {
   if (isMore) {
     return (
       <div style={{ flex: 1, padding: "0 30px 100px", overflowY: "auto" }}>
-        <BackHeader hideBack />
+        <BackHeader />
         <div style={{ fontSize: 24, fontWeight: 800, marginTop: 40, marginBottom: 10, paddingLeft: 12 }}>알림 카테고리 추가</div>
         <div style={{ fontSize: 15, color: C.gray, lineHeight: 1.6, marginBottom: 100, paddingLeft: 12, fontWeight: 500 }}>
           다른 항목도 추가로 설정할 수 있어요
@@ -123,7 +123,6 @@ export default function CategorySelect() {
       <BackHeader
         onBack={() => navigate("/signup/info")}
         progress={60}
-        hideBack
       />
       <div style={{ fontSize: 24, fontWeight: 800, marginTop: 40, marginBottom: 10, paddingLeft: 12 }}>알림 카테고리 선택</div>
       <div style={{ fontSize: 15, color: C.gray, lineHeight: 1.6, marginBottom: 100, paddingLeft: 12, fontWeight: 500 }}>

@@ -36,7 +36,7 @@ export default function MedEdit() {
 
   return (
     <div style={{ flex: 1, padding: "0 30px 100px", overflowY: "auto", display: "flex", flexDirection: "column" }}>
-      <BackHeader progress={onboarding ? 75 : undefined} hideBack />
+      <BackHeader progress={onboarding ? 75 : undefined} />
       <div style={{ fontSize: 24, fontWeight: 800, marginTop: 40, marginBottom: 10, paddingLeft: 12 }}>약 정보</div>
       <div style={{ fontSize: 15, color: C.gray, lineHeight: 1.6, marginBottom: 28, paddingLeft: 12, fontWeight: 500, paddingBottom: 15, minHeight: 48 }}>
         AI가 인식한 약 정보를<br />확인하고 수정해 주세요

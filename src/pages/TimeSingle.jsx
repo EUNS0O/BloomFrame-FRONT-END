@@ -30,7 +30,7 @@ export default function TimeSingle() {
 
   return (
     <div style={{ flex: 1, padding: "0 30px 100px", overflowY: "auto" }}>
-      <BackHeader progress={onboarding ? 80 : undefined} hideBack />
+      <BackHeader progress={onboarding ? 80 : undefined} />
       <TimePicker
         value={wip.draftTime || { hour: 1, minute: 0, ampm: "오전" }}
         onChange={(v) => setWip((w) => ({ ...w, draftTime: v }))}

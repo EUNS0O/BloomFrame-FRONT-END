@@ -36,7 +36,7 @@ export default function TimeList() {
 
   return (
     <div style={{ flex: 1, padding: "0 30px 100px", overflowY: "auto", display: "flex", flexDirection: "column" }}>
-      <BackHeader progress={onboarding ? 82 : undefined} hideBack />
+      <BackHeader progress={onboarding ? 82 : undefined} />
       <div style={{ fontSize: 24, fontWeight: 800, marginTop: 40, marginBottom: 10, paddingLeft: 12 }}>알림 · 복용 시간 설정</div>
       <div style={{ fontSize: 15, color: C.gray, lineHeight: 1.6, marginBottom: 28, paddingLeft: 12, fontWeight: 500, paddingBottom: 15, minHeight: 48 }}>
         알려드릴 시간을 확인해 주세요

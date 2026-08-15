@@ -30,7 +30,7 @@ export default function SignupType() {
 
   return (
     <div style={{ flex: 1, padding: "0 30px 30px" }}>
-      <BackHeader progress={20} hideBack />
+      <BackHeader progress={20} />
       <div style={{ fontSize: 24, fontWeight: 800, marginTop: 40, marginBottom: 10, paddingLeft: 12 }}>누가 사용하시나요?</div>
       <div style={{ fontSize: 15, color: C.gray, lineHeight: 1.6, marginBottom: 100, paddingLeft: 12, fontWeight: 500 }}>
         이 앱을 대리인이 사용하는지,<br />시니어 본인이 사용하는지 선택해 주세요

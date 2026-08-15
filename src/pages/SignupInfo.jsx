@@ -31,7 +31,7 @@ export default function SignupInfo() {
 
   return (
     <div style={{ flex: 1, padding: "0 24px 100px", overflowY: "auto" }}>
-      <BackHeader progress={40} hideBack />
+      <BackHeader progress={40} />
       <div style={{ fontSize: 24, fontWeight: 800, marginTop: 20, marginBottom: 8 }}>회원 정보 입력</div>
       <div style={{ fontSize: 13.5, color: C.gray, lineHeight: 1.6, marginBottom: 32 }}>
         시니어 · 본인 공통 정보를 입력해 주세요

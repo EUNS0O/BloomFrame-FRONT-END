@@ -31,7 +31,7 @@ export default function MedPhoto() {
 
   return (
     <div style={{ flex: 1, padding: "0 30px 30px" }}>
-      <BackHeader progress={onboarding ? 70 : undefined} hideBack />
+      <BackHeader progress={onboarding ? 70 : undefined} />
       <div style={{ fontSize: 24, fontWeight: 800, marginTop: 40, marginBottom: 10, paddingLeft: 12 }}>약봉지 촬영</div>
       <div
         onClick={handleCapture}
