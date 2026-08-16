@@ -13,12 +13,18 @@ export default function SignupInfo() {
   const navigate = useNavigate();
   const { data, update, setOnboarding, setWip, accountEditMode, setAccountEditMode } = useApp();
   const [permissionsAgreed, setPermissionsAgreed] = useState(false);
+  const [originalGuardianPhone, setOriginalGuardianPhone] = useState("");
   const scrollId = React.useId().replace(/:/g, "");
 
   // 회원가입(수정 모드 아님)으로 들어온 거면, 예전 테스트/이전 세션에 남아있던 값 대신 항상 빈 칸으로 시작
+  // 수정 모드로 들어온 거면, "원래 저장돼 있던 대리인 번호"를 기억해둠 — 이걸 실제로 바꿨을 때만 인증하기 버튼이 뜨게 하기 위함
   useEffect(() => {
     if (!accountEditMode) {
       update({ name: "", age: "", guardianPhone: "", selfPhone: "", email: "", password: "", passwordConfirm: "", phoneVerifying: false, otp: "" });
+      setOriginalGuardianPhone("");
+    } else {
+      update({ phoneVerifying: false, otp: "" }); // 예전 세션에 인증 진행 중이던 상태가 남아있지 않게 항상 리셋
+      setOriginalGuardianPhone(data.guardianPhone || "");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -50,9 +56,10 @@ export default function SignupInfo() {
     labelFontSize: 15,
   };
 
-  // 클릭만 해도 뜨는 게 아니라, 전화번호를 "다 입력했을 때"(숫자 10자리 이상)만 인증하기 버튼 노출
+  // 클릭만 해도 뜨는 게 아니라, 전화번호를 "다 입력했을 때"(숫자 10자리 이상) + "원래 값에서 실제로 바뀌었을 때"만 인증하기 버튼 노출
   const isPhoneComplete = (data.guardianPhone || "").replace(/\D/g, "").length >= 10;
-  const showPhoneVerifyButton = isPhoneComplete && !data.phoneVerifying;
+  const phoneChanged = data.guardianPhone !== originalGuardianPhone;
+  const showPhoneVerifyButton = isPhoneComplete && phoneChanged && !data.phoneVerifying;
 
   // 회원가입(수정 아님) 흐름에서만 권한 동의가 확인 버튼을 막음
   const confirmDisabled = !accountEditMode && !permissionsAgreed;
