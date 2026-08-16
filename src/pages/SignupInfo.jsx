@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { C } from "../styles/tokens";
 import { useApp } from "../context/AppContext";
@@ -12,9 +12,16 @@ const FIELD_MB = 20; // 필드 사이 간격 (조절용)
 export default function SignupInfo() {
   const navigate = useNavigate();
   const { data, update, setOnboarding, setWip, accountEditMode, setAccountEditMode } = useApp();
-  const [phoneFocused, setPhoneFocused] = useState(false);
   const [permissionsAgreed, setPermissionsAgreed] = useState(false);
   const scrollId = React.useId().replace(/:/g, "");
+
+  // 회원가입(수정 모드 아님)으로 들어온 거면, 예전 테스트/이전 세션에 남아있던 값 대신 항상 빈 칸으로 시작
+  useEffect(() => {
+    if (!accountEditMode) {
+      update({ name: "", age: "", guardianPhone: "", selfPhone: "", email: "", password: "", passwordConfirm: "", phoneVerifying: false, otp: "" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleConfirm = () => {
     if (accountEditMode) {
@@ -43,7 +50,9 @@ export default function SignupInfo() {
     labelFontSize: 15,
   };
 
-  const showPhoneVerifyButton = phoneFocused && !data.phoneVerifying;
+  // 클릭만 해도 뜨는 게 아니라, 전화번호를 "다 입력했을 때"(숫자 10자리 이상)만 인증하기 버튼 노출
+  const isPhoneComplete = (data.guardianPhone || "").replace(/\D/g, "").length >= 10;
+  const showPhoneVerifyButton = isPhoneComplete && !data.phoneVerifying;
 
   // 회원가입(수정 아님) 흐름에서만 권한 동의가 확인 버튼을 막음
   const confirmDisabled = !accountEditMode && !permissionsAgreed;
@@ -71,7 +80,6 @@ export default function SignupInfo() {
         <Field
           label="전화번호 (대리인)" placeholder="010-0000-0000"
           value={data.guardianPhone} onChange={(e) => update({ guardianPhone: e.target.value })}
-          onFocus={() => setPhoneFocused(true)}
           {...fieldProps}
           marginBottom={showPhoneVerifyButton || data.phoneVerifying ? 12 : FIELD_MB}
         />
