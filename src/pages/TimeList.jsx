@@ -18,7 +18,7 @@ const ICON_BLACK = {
 
 export default function TimeList() {
   const navigate = useNavigate();
-  const { onboarding, wip, setWip } = useApp();
+  const { data, onboarding, wip, setWip, commitCategory } = useApp();
   const scrollId = React.useId().replace(/:/g, "");
 
   if (!wip) return null;
@@ -26,6 +26,8 @@ export default function TimeList() {
   const times = wip.times || []; // 방어: times가 없는 상태로 들어와도 크래시 방지
   // 등록 순서가 아니라 실제 시간순으로 "1회차/2회차..."가 매겨지도록 표시용 정렬(원본 배열은 안 건드림)
   const sortedTimes = [...times].sort((a, b) => toTodayDate(a) - toTodayDate(b));
+  // 온보딩 중이어도 "이미 하나 이상 등록한 뒤 또 추가"하는 경우엔 이미지 선택을 다시 안 거침 — 진짜 첫 항목일 때만 거침
+  const isFirstCategory = data.categories.length === 0;
 
   const addTime = () => {
     setWip((w) => ({ ...w, draftTime: { hour: 1, minute: 0, ampm: "오전" }, editingTimeId: null }));
@@ -35,6 +37,16 @@ export default function TimeList() {
   const editTime = (t) => {
     setWip((w) => ({ ...w, draftTime: { hour: t.hour, minute: t.minute, ampm: t.ampm }, editingTimeId: t.id }));
     navigate("/onboarding/time-single");
+  };
+
+  const handleConfirm = () => {
+    // 온보딩 중 "진짜 첫 항목"일 때만 IoT 이미지 선택 화면으로 — 이후엔 마이페이지에서 따로 바꿀 수 있어서 안 거침
+    if (onboarding && isFirstCategory) {
+      navigate("/onboarding/image-select");
+    } else {
+      commitCategory(wip);
+      navigate(onboarding ? "/onboarding/category/more" : "/home");
+    }
   };
 
   return (
@@ -88,7 +100,7 @@ export default function TimeList() {
       {/* 확인 버튼 — 스크롤 영역 밖, 불투명한 고정 자리. 리스트가 여기 뒤로 절대 안 비침 */}
       <div style={{ padding: "14px 30px 40px", background: C.bg, flexShrink: 0, display: "flex", justifyContent: "center" }}>
         <div style={{ width: 170 }}>
-          <Btn disabled={!times.length} onClick={() => navigate("/onboarding/image-select")} padding="10px 14px">확인</Btn>
+          <Btn disabled={!times.length} onClick={handleConfirm} padding="10px 14px">확인</Btn>
         </div>
       </div>
     </div>

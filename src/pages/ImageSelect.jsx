@@ -25,7 +25,7 @@ const DEFAULT_PLANT_INDEX = 0; // 실제로 동작하는 유일한 식물의 칸
 
 export default function ImageSelect() {
   const navigate = useNavigate();
-  const { onboarding, wip, setWip, setData, imageOnly, setImageOnly } = useApp();
+  const { onboarding, wip, setWip, setData, imageOnly, setImageOnly, commitCategory } = useApp();
   const [toastVisible, setToastVisible] = useState(false);
   const toastTimer = useRef(null);
 
@@ -69,8 +69,7 @@ export default function ImageSelect() {
   // 온보딩 / 알림 카테고리 추가 흐름
   const finishCategory = () => {
     if (wip.image !== DEFAULT_PLANT_INDEX) return showComingSoon();
-    setData((d) => ({ ...d, categories: [...d.categories, wip] }));
-    setWip(null);
+    commitCategory(wip);
     if (onboarding) navigate("/onboarding/category/more");
     else navigate("/home");
   };
