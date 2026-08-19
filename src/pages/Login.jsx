@@ -5,6 +5,7 @@ import { TopBar } from "../components/common/Layout";
 import { Btn, Field } from "../components/common/Controls";
 import { BottomNav } from "../components/common/BottomNav";
 import { BottomButton } from "../components/common/BottomButton";
+import backIcon from "../assets/back_icon.png";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -26,6 +27,12 @@ export default function Login() {
     <>
       <TopBar />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "30px 28px 0" }}>
+        <button
+          onClick={() => navigate("/")}
+          style={{ width: 33, height: 33, border: "none", background: "none", padding: 0, marginBottom: 18, cursor: "pointer" }}
+        >
+          <img src={backIcon} alt="뒤로가기" style={{ width: 33, height: 33 }} />
+        </button>
         <div style={{ fontSize: 29, fontWeight: 800, color: C.black }}>로그인</div>
         <div style={{ fontSize: 17, color: C.linkGray, lineHeight: 1.5, marginTop: 10, marginBottom: 20 }}>
           서비스를 이용하기 위해<br />로그인해 주세요
