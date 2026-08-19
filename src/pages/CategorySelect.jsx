@@ -135,10 +135,7 @@ export default function CategorySelect() {
   // 온보딩 중 최초 "카테고리 선택" 화면 (progress bar 있음, isMore는 위에서 이미 처리됨)
   return (
     <div style={{ flex: 1, padding: "0 30px 30px" }}>
-      <BackHeader
-        onBack={() => navigate("/signup/info")}
-        progress={60}
-      />
+      <BackHeader progress={60} />
       <div style={{ fontSize: 24, fontWeight: 800, marginTop: 40, marginBottom: 10, paddingLeft: 12 }}>알림 카테고리 선택</div>
       <div style={{ fontSize: 15, color: C.gray, lineHeight: 1.6, marginBottom: 70, paddingLeft: 12, fontWeight: 500 }}>
         알려드릴 항목을 선택해 주세요
