@@ -1,7 +1,9 @@
 import React from "react";
 
 // 화면 중앙 위쪽에 잠깐 떴다가 사라지는, 각진 흰색 알림 카드
+// message: 문자열 하나 또는 여러 줄이면 배열(["첫째 줄", "둘째 줄"])로 전달
 export function Toast({ message, visible }) {
+  const lines = Array.isArray(message) ? message : [message];
   return (
     <div
       style={{
@@ -15,7 +17,9 @@ export function Toast({ message, visible }) {
         whiteSpace: "nowrap", textAlign: "center",
       }}
     >
-      <span style={{ fontSize: 20, fontWeight: 600, color: "#111" }}>{message}</span>
+      {lines.map((line, i) => (
+        <div key={i} style={{ fontSize: 20, fontWeight: 600, color: "#111" }}>{line}</div>
+      ))}
     </div>
   );
-} 
+}
