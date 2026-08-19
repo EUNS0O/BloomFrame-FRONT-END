@@ -30,6 +30,7 @@ const today = new Date();
 export default function History() {
   const navigate = useNavigate();
   const { data } = useApp();
+  const scrollId = React.useId().replace(/:/g, "");
 
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
@@ -66,7 +67,15 @@ export default function History() {
   return (
     <>
       <TopBar />
-      <div style={{ flex: 1, padding: "20px 20px 100px", overflowY: "auto" }}>
+      <div className={`vscroll-${scrollId}`} style={{ flex: 1, padding: "20px 20px 100px", overflowY: "auto" }}>
+        <style>{`
+          .vscroll-${scrollId} { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+          .vscroll-${scrollId}:hover { scrollbar-color: ${C.grayLine} transparent; }
+          .vscroll-${scrollId}::-webkit-scrollbar { width: 3px; }
+          .vscroll-${scrollId}::-webkit-scrollbar-track { background: transparent; }
+          .vscroll-${scrollId}::-webkit-scrollbar-thumb { background: transparent; border-radius: 4px; }
+          .vscroll-${scrollId}:hover::-webkit-scrollbar-thumb { background: ${C.grayLine}; }
+        `}</style>
         <div style={{ fontSize: 24, fontWeight: 800, marginTop: 25, marginBottom: 16 }}>이전 기록</div>
 
         <div style={{ border: `2px solid ${C.black}`, borderRadius: 12, padding: 10, marginBottom: 40, width: "94%", margin: "40px auto 60px" }}>
