@@ -56,7 +56,7 @@ export default function ImageSelect() {
           <div style={{ fontSize: 17, color: C.gray, lineHeight: 1.6, fontWeight: 500 }}>
             IoT 스크린에 들어갈 이미지를 선택해 주세요
           </div>
-          <ImageGrid selected={wip.image} onSelect={(i) => setWip((w) => ({ ...w, image: i }))} thumbnails={PLANT_THUMBNAILS} />
+          <ImageGrid selected={wip.image} onSelect={(i) => setWip((w) => ({ ...w, image: i }))} thumbnails={PLANT_THUMBNAILS} cellBg={{ 0: "#FFE2D0" }} imageScale={{ 0: 1.3 }} imageOffsetY={{ 0: -8 }} />
           <BottomButton variant="high">
             <Btn disabled={wip.image == null} onClick={confirmImageOnly} padding="10px 14px">확인</Btn>
           </BottomButton>
@@ -83,7 +83,7 @@ export default function ImageSelect() {
       <div style={{ fontSize: 15, color: C.gray, lineHeight: 1.6, paddingLeft: 12, fontWeight: 500 }}>
         IoT 스크린에 들어갈 이미지를 선택해 주세요
       </div>
-      <ImageGrid selected={wip.image} onSelect={(i) => setWip((w) => ({ ...w, image: i }))} thumbnails={PLANT_THUMBNAILS} />
+      <ImageGrid selected={wip.image} onSelect={(i) => setWip((w) => ({ ...w, image: i }))} thumbnails={PLANT_THUMBNAILS} cellBg={{ 0: "#FFE2D0" }} imageScale={{ 0: 1.5 }} imageOffsetY={{ 0: -15 }} />
       <BottomButton>
         <Btn disabled={wip.image == null} onClick={finishCategory} padding="10px 14px">확인</Btn>
       </BottomButton>
