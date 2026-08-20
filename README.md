@@ -30,11 +30,20 @@ BloomFrame+는 약 복용, 운동, 사용자 지정 일정처럼 매일 반복�
 
 ### 생활 속 BloomFrame+
 
-<div align="center">
-  <img src="docs/images/bloomframe-in-living-space.png" alt="생활 공간에 설치된 BloomFrame+ IoT 디스플레이" width="720" />
-  <br />
-  <sub>일상 공간에 자연스럽게 스며드는 디지털 액자형 건강 습관 도우미</sub>
-</div>
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/images/bloomframe-in-living-space.png" alt="생활 공간에 설치된 BloomFrame+ IoT 디스플레이" width="280" />
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/images/bloomframe-touch-interaction.png" alt="BloomFrame+ IoT 디스플레이를 터치하는 시니어 사용자" width="280" />
+    </td>
+  </tr>
+  <tr>
+    <td align="center">일상 공간에 자연스럽게 스며드는 디지털 액자형 건강 습관 도우미</td>
+    <td align="center">알림을 직접 확인하고 터치로 수행을 인증하는 직관적인 사용 경험</td>
+  </tr>
+</table>
 
 ## 서비스 미리보기
 
