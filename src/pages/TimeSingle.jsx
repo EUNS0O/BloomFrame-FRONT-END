@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
-import { nextId } from "../utils/format";
+import { nextId, toBackendTime } from "../utils/format";
 import { C } from "../styles/tokens";
 import { BackHeader } from "../components/common/BackHeader";
 import { Btn } from "../components/common/Controls";
 import { BottomButton } from "../components/common/BottomButton";
 import { TimePicker } from "../components/widgets/TimePicker";
+import { createExerciseAlarm, updateExerciseAlarm, createCustomAlarm, updateCustomAlarm } from "../api/alarms";
 
 export default function TimeSingle() {
   const navigate = useNavigate();
@@ -59,7 +60,7 @@ export default function TimeSingle() {
   // 이미지 선택을 다시 안 거침
   const isFirstCategory = data.categories.length === 0;
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (submitting) return;
 
     const draft = wip.draftTime || {
@@ -79,6 +80,32 @@ export default function TimeSingle() {
     setError("");
 
     const startDate = getAlarmStartDate(draft);
+    const alarmTime = toBackendTime(draft);
+
+    try {
+      // 약(med)은 이 화면에서 직접 서버 호출 안 함 — TimeList.jsx에서 회차별로 따로 처리
+      if (wip.type !== "med") {
+        const isExercise = wip.type === "exercise";
+        const editingTime = wip.editingTimeId ? currentTimes.find((t) => t.id === wip.editingTimeId) : null;
+
+        if (editingTime?.serverId) {
+          // 기존에 등록된 알람 수정
+          if (isExercise) await updateExerciseAlarm(editingTime.serverId, { alarmTime });
+          else await updateCustomAlarm(editingTime.serverId, { alarmTime });
+        } else {
+          // 새 알람 등록
+          const res = isExercise
+            ? await createExerciseAlarm({ exerciseName: wip.name, alarmTime })
+            : await createCustomAlarm({ title: wip.name, alarmTime });
+          // 서버가 새로 만들어준 id를 저장해둬야 나중에 수정/삭제할 때 씀
+          if (res?.id) draft.serverId = res.id;
+        }
+      }
+    } catch (e) {
+      setError(e.message || "알람 저장에 실패했어요.");
+      setSubmitting(false);
+      return;
+    }
 
     const updatedWip = wip.editingTimeId
       ? {
@@ -105,6 +132,8 @@ export default function TimeSingle() {
             },
           ],
         };
+
+    setSubmitting(false);
 
     if (wip.type === "med") {
       setWip(updatedWip);
@@ -165,7 +194,7 @@ export default function TimeSingle() {
           onClick={handleConfirm}
           padding="10px 14px"
         >
-          확인
+          {submitting ? "저장 중..." : "확인"}
         </Btn>
       </BottomButton>
     </div>
