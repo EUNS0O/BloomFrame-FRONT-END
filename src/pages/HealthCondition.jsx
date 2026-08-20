@@ -3,6 +3,7 @@ import { C } from "../styles/tokens";
 import { TopBar } from "../components/common/Layout";
 import { BottomNav } from "../components/common/BottomNav";
 import healthIcon from "../assets/solar_health-linear.png";
+
 import {
     getHealthConditions,
     createHealthCondition,
@@ -15,7 +16,11 @@ export default function HealthCondition() {
     const [editingId, setEditingId] = useState(null);
     const [conditions, setConditions] = useState([]);
     const [isFocused, setIsFocused] = useState(false);
+    const [loading, setLoading] = useState(false);
 
+    const scrollId = React.useId().replace(/:/g, "");
+
+    // 건강 상태 목록 조회
     const loadConditions = async () => {
         try {
             const data = await getHealthConditions();
@@ -25,16 +30,20 @@ export default function HealthCondition() {
         }
     };
 
+    // 페이지 진입 시 기존 건강 상태 조회
     useEffect(() => {
         loadConditions();
     }, []);
 
+    // 추가 / 수정
     const handleConfirm = async () => {
         const value = conditionName.trim();
 
-        if (!value) return;
+        if (!value || loading) return;
 
         try {
+            setLoading(true);
+
             if (editingId !== null) {
                 await updateHealthCondition(editingId, value);
                 setEditingId(null);
@@ -43,20 +52,30 @@ export default function HealthCondition() {
             }
 
             setConditionName("");
+
+            // 서버 데이터 다시 조회
             await loadConditions();
         } catch (error) {
             console.error("건강 상태 저장 실패:", error);
-            alert(error.message);
+            alert(error.message || "건강 상태 저장에 실패했습니다.");
+        } finally {
+            setLoading(false);
         }
     };
 
+    // 수정 버튼
     const handleEdit = (condition) => {
         setConditionName(condition.conditionName);
         setEditingId(condition.id);
     };
 
+    // 삭제 버튼
     const handleDelete = async (id) => {
+        if (loading) return;
+
         try {
+            setLoading(true);
+
             await deleteHealthCondition(id);
 
             if (editingId === id) {
@@ -64,10 +83,13 @@ export default function HealthCondition() {
                 setConditionName("");
             }
 
+            // 서버 데이터 다시 조회
             await loadConditions();
         } catch (error) {
             console.error("건강 상태 삭제 실패:", error);
-            alert(error.message);
+            alert(error.message || "건강 상태 삭제에 실패했습니다.");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -75,31 +97,57 @@ export default function HealthCondition() {
         <>
             <TopBar />
 
+            <style>{`
+        .health-scroll-${scrollId} {
+          scrollbar-width: thin;
+          scrollbar-color: transparent transparent;
+        }
+
+        .health-scroll-${scrollId}:hover {
+          scrollbar-color: ${C.grayLine} transparent;
+        }
+
+        .health-scroll-${scrollId}::-webkit-scrollbar {
+          width: 3px;
+        }
+
+        .health-scroll-${scrollId}::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        .health-scroll-${scrollId}::-webkit-scrollbar-thumb {
+          background: transparent;
+          border-radius: 4px;
+        }
+
+        .health-scroll-${scrollId}:hover::-webkit-scrollbar-thumb {
+          background: ${C.grayLine};
+        }
+      `}</style>
+
             <div
                 style={{
                     flex: 1,
                     display: "flex",
                     flexDirection: "column",
                     minHeight: 0,
+                    overflow: "hidden",
                 }}
             >
                 <div
                     style={{
-                        flex: 1,
-                        minHeight: 0,
-                        overflow: "hidden",
-                        padding: "0 30px",
+                        padding: "0 35px",
                         boxSizing: "border-box",
+                        flexShrink: 0,
                     }}
                 >
                     {/* 제목 */}
                     <div
                         style={{
-                            fontSize: 24,
+                            fontSize: 30,
                             fontWeight: 800,
                             marginTop: 40,
                             marginBottom: 10,
-                            paddingLeft: 12,
                         }}
                     >
                         건강 상태 업데이트
@@ -108,13 +156,11 @@ export default function HealthCondition() {
                     {/* 설명 */}
                     <div
                         style={{
-                            fontSize: 15,
+                            fontSize: 18,
                             color: C.gray,
-                            lineHeight: 1.6,
-                            marginBottom: 28,
-                            paddingLeft: 12,
+                            lineHeight: 1.45,
                             fontWeight: 500,
-                            paddingBottom: 15,
+                            marginBottom: 43,
                         }}
                     >
                         더 많은 정보를 전달해드리기 위해
@@ -129,8 +175,11 @@ export default function HealthCondition() {
                         onFocus={() => setIsFocused(true)}
                         onBlur={() => setIsFocused(false)}
                         onKeyDown={(e) => {
-                            if (e.key === "Enter") handleConfirm();
+                            if (e.key === "Enter") {
+                                handleConfirm();
+                            }
                         }}
+                        disabled={loading}
                         style={{
                             width: "100%",
                             height: 46,
@@ -156,6 +205,7 @@ export default function HealthCondition() {
                     >
                         <button
                             onClick={handleConfirm}
+                            disabled={loading}
                             style={{
                                 width: 202,
                                 height: 43,
@@ -165,7 +215,8 @@ export default function HealthCondition() {
                                 color: "#fff",
                                 fontSize: 15,
                                 fontWeight: 400,
-                                cursor: "pointer",
+                                cursor: loading ? "default" : "pointer",
+                                opacity: loading ? 0.7 : 1,
                             }}
                         >
                             {editingId !== null ? "수정 완료" : "확인"}
@@ -174,118 +225,129 @@ export default function HealthCondition() {
 
                     {/* 건강 상태가 있을 때만 표시 */}
                     {conditions.length > 0 && (
-                        <div style={{ marginTop: 110 }}>
-                            <div
-                                style={{
-                                    fontSize: 20,
-                                    fontWeight: 700,
-                                    color: C.black,
-                                    marginBottom: 10,
-                                }}
-                            >
-                                현재 건강 상태
-                            </div>
-
-                            {/* 건강 상태 목록만 스크롤 */}
-                            <div
-                                style={{
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    gap: 10,
-                                    maxHeight: 230,
-                                    overflowY: "auto",
-                                    paddingRight: 3,
-                                    boxSizing: "border-box",
-                                    scrollbarGutter: "stable",
-                                }}
-                            >
-                                {conditions.map((condition) => (
-                                    <div
-                                        key={condition.id}
-                                        style={{
-                                            height: 70,
-                                            minHeight: 70,
-                                            boxSizing: "border-box",
-                                            padding: "0 13px",
-                                            borderRadius: 5,
-                                            background: "#E8E8E8",
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "space-between",
-                                            flexShrink: 0,
-                                        }}
-                                    >
-                                        {/* 아이콘 + 병명 */}
-                                        <div
-                                            style={{
-                                                display: "flex",
-                                                alignItems: "center",
-                                                gap: 10,
-                                            }}
-                                        >
-                                            {/* 흰색 원 */}
-                                            <div
-                                                style={{
-                                                    width: 28,
-                                                    height: 28,
-                                                    borderRadius: "50%",
-                                                    background: "#fff",
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    justifyContent: "center",
-                                                    flexShrink: 0,
-                                                }}
-                                            >
-                                                <img
-                                                    src={healthIcon}
-                                                    alt=""
-                                                    style={{
-                                                        width: 17,
-                                                        height: 17,
-                                                        objectFit: "contain",
-                                                    }}
-                                                />
-                                            </div>
-
-                                            <span
-                                                style={{
-                                                    fontSize: 15,
-                                                    fontWeight: 700,
-                                                    color: C.black,
-                                                }}
-                                            >
-                        {condition.conditionName}
-                      </span>
-                                        </div>
-
-                                        {/* 수정 / 삭제 */}
-                                        <div
-                                            style={{
-                                                display: "flex",
-                                                alignItems: "center",
-                                                gap: 10,
-                                            }}
-                                        >
-                                            <button
-                                                onClick={() => handleEdit(condition)}
-                                                style={actionBtnStyle}
-                                            >
-                                                수정
-                                            </button>
-
-                                            <button
-                                                onClick={() => handleDelete(condition.id)}
-                                                style={actionBtnStyle}
-                                            >
-                                                삭제
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                        <div
+                            style={{
+                                marginTop: 90,
+                                fontSize: 20,
+                                fontWeight: 700,
+                                color: C.black,
+                                marginBottom: 10,
+                            }}
+                        >
+                            현재 건강 상태
                         </div>
                     )}
                 </div>
+
+                {/* 건강 상태 목록 */}
+                {conditions.length > 0 && (
+                    <div
+                        className={`health-scroll-${scrollId}`}
+                        style={{
+                            maxHeight: 230,
+                            overflowY: "scroll",
+                            flexShrink: 0,
+                            marginBottom: 25,
+                        }}
+                    >
+                        <div
+                            style={{
+                                marginLeft: 35,
+                                width: "calc(100% - 67px)",
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: 10,
+                                boxSizing: "border-box",
+                            }}
+                        >
+                            {conditions.map((condition) => (
+                                <div
+                                    key={condition.id}
+                                    style={{
+                                        width: "100%",
+                                        height: 70,
+                                        minHeight: 70,
+                                        boxSizing: "border-box",
+                                        padding: "0 13px",
+                                        borderRadius: 5,
+                                        background: "#E8E8E8",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "space-between",
+                                        flexShrink: 0,
+                                    }}
+                                >
+                                    {/* 아이콘 + 병명 */}
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 10,
+                                        }}
+                                    >
+                                        <div
+                                            style={{
+                                                width: 28,
+                                                height: 28,
+                                                borderRadius: "50%",
+                                                background: "#fff",
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                flexShrink: 0,
+                                            }}
+                                        >
+                                            <img
+                                                src={healthIcon}
+                                                alt=""
+                                                style={{
+                                                    width: 17,
+                                                    height: 17,
+                                                    objectFit: "contain",
+                                                }}
+                                            />
+                                        </div>
+
+                                        <span
+                                            style={{
+                                                fontSize: 15,
+                                                fontWeight: 700,
+                                                color: C.black,
+                                            }}
+                                        >
+                      {condition.conditionName}
+                    </span>
+                                    </div>
+
+                                    {/* 수정 / 삭제 */}
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 10,
+                                        }}
+                                    >
+                                        <button
+                                            onClick={() => handleEdit(condition)}
+                                            disabled={loading}
+                                            style={actionBtnStyle}
+                                        >
+                                            수정
+                                        </button>
+
+                                        <button
+                                            onClick={() => handleDelete(condition.id)}
+                                            disabled={loading}
+                                            style={actionBtnStyle}
+                                        >
+                                            삭제
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
 
             <BottomNav />
