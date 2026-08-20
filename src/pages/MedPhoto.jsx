@@ -4,7 +4,7 @@ import { useApp } from "../context/AppContext";
 import { C } from "../styles/tokens";
 import { nextId } from "../utils/format";
 import { BackHeader } from "../components/common/BackHeader";
-import { createMedication, analyzeMedicationPhoto } from "../api/medications";
+import { createMedication, analyzeMedicationPhoto, deleteMedication } from "../api/medications";
 import cameraIcon from "../assets/camera_icon.png";
 
 // ── 조절용 상수 ──────────────────────────────
@@ -54,6 +54,9 @@ export default function MedPhoto() {
       // 서버가 placeholder 자체는 그대로 두고, 새로 인식된 약들을 별도로 만들어서 돌려주는 방식이라
       // 응답에 placeholder(더미 "분석 중..." 항목)가 그대로 섞여 나옴 — 걸러내고 진짜 분석 결과만 씀
       const analyzed = rawAnalyzed.filter((m) => m.id !== placeholder.id);
+
+      // 분석 끝났으니 임시로 만들어둔 "빈 약" 찌꺼기를 서버에서도 지움 — 안 지우면 마이페이지 약 목록에 "분석 중.." 이 계속 남아있게 됨
+      deleteMedication(placeholder.id).catch((e) => console.error("[MedPhoto] placeholder 정리 실패:", e));
 
       if (analyzed.length === 0) {
         setError("사진에서 약을 인식하지 못했어요. 다시 찍어주시거나 직접 입력해 주세요.");
