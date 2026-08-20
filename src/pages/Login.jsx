@@ -5,6 +5,7 @@ import { TopBar } from "../components/common/Layout";
 import { Btn, Field } from "../components/common/Controls";
 import { BottomNav } from "../components/common/BottomNav";
 import { BottomButton } from "../components/common/BottomButton";
+import { login } from "../api/auth";
 import backIcon from "../assets/back_icon.png";
 
 export default function Login() {
@@ -12,15 +13,23 @@ export default function Login() {
   const [id, setId] = useState("");
   const [pw, setPw] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!id.trim() || !pw.trim()) {
       setError("아이디와 비밀번호를 모두 입력해 주세요.");
       return;
     }
-    // 실제 인증은 백엔드 연동 후 여기서 처리 (지금은 입력만 확인하고 통과)
     setError("");
-    navigate("/home");
+    setLoading(true);
+    try {
+      await login({ email: id.trim(), password: pw });
+      navigate("/home");
+    } catch (e) {
+      setError(e.message || "로그인에 실패했어요.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -55,7 +64,7 @@ export default function Login() {
         {error && <div style={{ fontSize: 12.5, color: "#E5484D", marginTop: 6 }}>{error}</div>}
 
         <BottomButton variant="high">
-          <Btn onClick={handleLogin} padding="10px 14px">확인</Btn>
+          <Btn disabled={loading} onClick={handleLogin} padding="10px 14px">{loading ? "확인 중..." : "확인"}</Btn>
         </BottomButton>
       </div>
       <BottomNav interactive={false} />

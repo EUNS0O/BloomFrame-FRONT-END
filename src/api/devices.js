@@ -1,6 +1,20 @@
-import { apiFetch } from "./client";
+import { api } from "./client";
 
-// GET /api/devices/{device_id}/plant-state
-export function getPlantState(deviceId) {
-  return apiFetch(`/api/devices/${deviceId}/plant-state`);
+export async function registerDevice(deviceUuid) {
+  return api.post("/api/v1/devices", { deviceUuid });
+}
+export async function getDevices() {
+  return api.get("/api/v1/devices");
+}
+export async function renameDevice(deviceUuid, deviceName) {
+  return api.patch(`/api/v1/devices/${deviceUuid}`, { deviceName });
+}
+export async function connectDevice(deviceUuid) {
+  return api.patch(`/api/v1/devices/${deviceUuid}/connect`);
+}
+export async function disconnectDevice(deviceUuid) {
+  return api.patch(`/api/v1/devices/${deviceUuid}/disconnect`);
+}
+export async function deleteDevice(deviceUuid) {
+  return api.delete(`/api/v1/devices/${deviceUuid}`);
 }
