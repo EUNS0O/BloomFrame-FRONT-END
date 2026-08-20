@@ -2,6 +2,7 @@ import { api, setToken, clearToken } from "./client";
 import { stripPhone } from "../utils/format";
 
 // 전화번호 인증번호 발송
+// 개발/테스트 단계에서는 응답에 테스트용 인증번호가 같이 옴 (실제 SMS 연동 완료되면 이 필드는 응답에서 빠질 예정)
 export async function sendCode(phone) {
   return api.post("/api/v1/auth/send-code", { phone: stripPhone(phone) }, { auth: false });
 }
@@ -47,6 +48,7 @@ export async function getMe() {
   const data = await api.get("/api/v1/users/me");
   // 백엔드 필드명(caregiverPhone) -> 프론트 필드명(guardianPhone)으로 변환
   return {
+    uid: data.id, // 뉴스레터 등 {uid}가 경로에 들어가는 API에서 씀
     name: data.name,
     guardianPhone: data.caregiverPhone,
     selfPhone: data.selfPhone,

@@ -1,13 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useApp } from "../context/AppContext";
-import { getTodaySchedule } from "../utils/alarmStatus";
+import { getTodaySchedule, getAlarmStatus } from "../utils/alarmStatus";
+import { getMe } from "../api/auth";
+import { findReminderId, touchAuth } from "../api/reminders";
+import { getLatestNewsletter } from "../api/newsletter";
+import { loadCategoriesFromServer } from "../api/sync";
 
 import bgIdle from "../assets/iot/bg_idle.webp";
 import bgAlarm from "../assets/iot/bg_alarm.webp";
 import bgChange from "../assets/iot/bg_change.mp4";
-import bloomToWilt from "../assets/iot/bloom_to_wilt.webm";
-import wiltToBloom from "../assets/iot/wilt_to_bloom.webm";
 import posterBloom from "../assets/iot/poster_blooming.png";
 import posterWilt from "../assets/iot/poster_wilted.png";
 import medicineYellow from "../assets/iot/medicine_yellow.png";
@@ -16,6 +18,19 @@ import medicineRed from "../assets/iot/medicine_red.png";
 import gymBlue from "../assets/iot/gym_blue.png";
 import gymGreen from "../assets/iot/gym_green.png";
 import gymRed from "../assets/iot/gym_red.png";
+import clockGray from "../assets/iot/clock_gray.png";
+import clockGreen from "../assets/iot/clock_green.png";
+import clockRed from "../assets/iot/clock_red.png";
+
+// 식물 전환 애니메이션 — 영상 대신 프레임(webp) 연속 재생 방식
+// (영상 버퍼링/디코딩 지연으로 인한 깜빡임을 원천 차단하기 위해, 미리 다 불러온 뒤 이미지만 빠르게 바꿔치기함)
+const BLOOM_TO_WILT_FRAMES = Object.values(
+  import.meta.glob("../assets/iot/frames/bloom_to_wilt/*.webp", { eager: true, import: "default" })
+);
+const WILT_TO_BLOOM_FRAMES = Object.values(
+  import.meta.glob("../assets/iot/frames/wilt_to_bloom/*.webp", { eager: true, import: "default" })
+);
+const FRAME_INTERVAL_MS = 1000 / 20; // 20fps로 뽑아둔 프레임이라 그 속도에 맞춤
 
 const Z = {
   bg: 0,
@@ -25,7 +40,7 @@ const Z = {
   newsletter: 4,
 };
 
-const PLANT_OFFSET_Y = -161;
+const PLANT_OFFSET_Y = -190;
 
 // 식물을 화면 정중앙에서 위로 옮기는 값
 // 음수 = 위로, 양수 = 아래로
@@ -42,9 +57,9 @@ const CARD_ICON = {
     missed: gymRed,
   },
   other: {
-    pending: medicineYellow,
-    success: medicineGreen,
-    missed: medicineRed,
+    pending: clockGray,
+    success: clockGreen,
+    missed: clockRed,
   },
 };
 
@@ -96,7 +111,7 @@ const MOCK_NEWSLETTER = `안녕하세요 김인하님!
 
 const STAGE1_MS = 3 * 60 * 1000;
 const STAGE2_MS = 10 * 60 * 1000;
-const PRE_ALARM_MS = 5 * 60 * 1000;
+const PRE_ALARM_MS = 10 * 1000; // 알람 10초 전부터 배경 미리 전환
 
 // 배경이 알림 시각보다 몇 분 일찍 바뀔지
 // 기본 5분 전
@@ -121,6 +136,25 @@ export default function IotDisplay() {
   const [searchParams] = useSearchParams();
   const scrollId = React.useId().replace(/:/g, "");
 
+  // 마운트되자마자 전환 프레임 전부를 미리 "디코딩"까지 끝내둠 —
+  // 파일만 받아두는 것과 달리, decode()까지 미리 해두면 실제 재생 중엔 화면에 그리기만 하면 돼서
+  // 느린 기기에서 재생하다가 버벅이는(디코딩 지연) 걸 막을 수 있음
+  useEffect(() => {
+    [...BLOOM_TO_WILT_FRAMES, ...WILT_TO_BLOOM_FRAMES].forEach((src) => {
+      const img = new Image();
+      img.src = src;
+      if (img.decode) img.decode().catch(() => {}); // 디코딩 실패해도(구형 브라우저 등) 무시하고 넘어감
+    });
+  }, []);
+
+  // Home.jsx랑 마찬가지로, IoT 화면도 켜질 때(새로고침 포함)마다 서버에서 최신 알림 목록을 다시 받아옴 —
+  // 안 그러면 localStorage에 남아있는 예전(이미 삭제됐을 수도 있는) 알람으로 계속 스케줄을 계산하게 됨
+  useEffect(() => {
+    loadCategoriesFromServer()
+      .then((categories) => update({ categories }))
+      .catch((e) => console.error("[IotDisplay] 알림 목록 조회 실패:", e));
+  }, []);
+
   const testIn = searchParams.get("testIn");
 
   const cardsTest = searchParams.get("cardsTest") === "1";
@@ -136,7 +170,7 @@ export default function IotDisplay() {
       : STAGE2_MS;
 
   const preAlarmMs =
-    Number(searchParams.get("preAlarm")) >= 0
+    searchParams.get("preAlarm") !== null && Number(searchParams.get("preAlarm")) >= 0
       ? Number(searchParams.get("preAlarm")) * 1000
       : PRE_ALARM_MS;
 
@@ -198,6 +232,9 @@ export default function IotDisplay() {
 
   const [plantState, setPlantState] = useState("BLOOMING");
   const [transition, setTransition] = useState(null);
+  const [frameIndex, setFrameIndex] = useState(0);
+  const [hasMounted, setHasMounted] = useState(false); // 첫 렌더링에선 배경 opacity 트랜지션을 꺼서, "바뀌려다 마는" 것처럼 보이는 걸 방지
+  const rafIds = useRef([]);
   const [alarmPhase, setAlarmPhase] = useState(null);
   const [activeAlarmKey, setActiveAlarmKey] = useState(null);
   const [now, setNow] = useState(new Date());
@@ -208,10 +245,33 @@ export default function IotDisplay() {
   // 알림 정각보다 preAlarmMs만큼 일찍 켜짐
 
   const [showNewsletter, setShowNewsletter] = useState(false);
+  const [newsletterContent, setNewsletterContent] = useState(null); // 실제 서버에서 받아온 뉴스레터 (없으면 안내 문구로 대체)
+  const [uid, setUid] = useState(null);
+  const [verifying, setVerifying] = useState(false);
+
+  // 태블릿(IoT 화면)은 마이페이지를 거쳐서 들어오는 게 아닐 수도 있어서, 여기서 따로 내 uid를 받아둠
+  useEffect(() => {
+    getMe()
+      .then((me) => setUid(me.uid))
+      .catch((e) => console.error("[IotDisplay] 내 정보 조회 실패:", e));
+  }, []);
 
   const resolvedKeys = useRef(new Set());
   const outcomes = useRef(new Map());
   const wasAlarmWindow = useRef(false);
+
+  const isTestMode = testIn != null || cardsTest;
+
+  // 실제 알람은 새로고침해도 안 잊어버리게, 매번 data.verifications + 지금 시각으로 다시 판정함
+  // (테스트 모드는 verifications를 안 건드리는 가짜 키라 기존처럼 ref 기반 시뮬레이션 유지)
+  const resolveEntry = (entry, nowMs) => {
+    if (isTestMode) {
+      return resolvedKeys.current.has(entry.key)
+        ? outcomes.current.get(entry.key)
+        : "pending";
+    }
+    return getAlarmStatus(entry, data.verifications, new Date(nowMs));
+  };
 
   // cardsTest 모드:
   // "이미 지난" 카드 2개는 성공/실패 결과를 미리 심어둠
@@ -236,7 +296,7 @@ export default function IotDisplay() {
       // stage2Ms 끝날 때까지 "임박" 상태
       const bgCurrent = schedule.find(
         (s) =>
-          !resolvedKeys.current.has(s.key) &&
+          resolveEntry(s, nowMs) === "pending" &&
           nowMs >= s.at.getTime() - preAlarmMs &&
           nowMs < s.at.getTime() + stage2Ms
       );
@@ -246,7 +306,7 @@ export default function IotDisplay() {
       // 꽃 시듦/카드 카운트다운은 기존대로 알림 "정각"부터 시작
       const current = schedule.find(
         (s) =>
-          !resolvedKeys.current.has(s.key) &&
+          resolveEntry(s, nowMs) === "pending" &&
           nowMs >= s.at.getTime() &&
           nowMs < s.at.getTime() + stage2Ms
       );
@@ -273,8 +333,12 @@ export default function IotDisplay() {
         });
 
         if (elapsed >= stage2Ms) {
-          resolvedKeys.current.add(current.key);
-          outcomes.current.set(current.key, "missed");
+          // 실제 알람은 시간이 지나면 getAlarmStatus가 자동으로 "missed"를 계산해주니 ref에 안 남겨도 됨.
+          // 테스트 모드만 ref에 기록해서 시뮬레이션 유지.
+          if (isTestMode) {
+            resolvedKeys.current.add(current.key);
+            outcomes.current.set(current.key, "missed");
+          }
 
           setAlarmPhase(null);
           setActiveAlarmKey(null);
@@ -284,9 +348,21 @@ export default function IotDisplay() {
 
     tick();
 
+    // hasMounted를 tick()이랑 같은 타이밍에 켜면, "진짜 첫 값"이 반영되는 그 렌더링부터 이미 트랜지션이 걸려서
+    // 오히려 그 첫 변화가 애니메이션으로 보여버림(=깜빡이는 것처럼). 최소 한 프레임 이상 늦춰서 켜야 함.
+    const raf1 = requestAnimationFrame(() => {
+      const raf2 = requestAnimationFrame(() => setHasMounted(true));
+      rafIds.current.push(raf2);
+    });
+    rafIds.current.push(raf1);
+
     const id = setInterval(tick, 1000);
 
-    return () => clearInterval(id);
+    return () => {
+      clearInterval(id);
+      rafIds.current.forEach((rid) => cancelAnimationFrame(rid));
+      rafIds.current = [];
+    };
   }, [
     schedule,
     plantState,
@@ -305,10 +381,33 @@ export default function IotDisplay() {
     setTransition(null);
   };
 
-  const handleVerify = () => {
-    if (showNewsletter) return;
+  const handleVerify = async () => {
+    if (showNewsletter || verifying) return;
 
     if (!activeAlarmKey) return;
+
+    // 테스트 모드(testIn/cardsTest)의 가짜 알람은 실제 서버 인증 API를 호출하지 않고 로컬에서만 처리
+    const isTestAlarm = testIn || cardsTest || activeAlarmKey.startsWith("test-");
+
+    if (!isTestAlarm) {
+      setVerifying(true);
+      try {
+        const entry = schedule.find((s) => s.key === activeAlarmKey);
+        const reminderId = entry ? await findReminderId(entry.serverId, entry.label) : null;
+
+        if (!reminderId) {
+          // 서버에 아직 이 시간에 대한 리마인더가 안 만들어졌거나(스케줄러 타이밍), 매칭 실패
+          console.warn("[IotDisplay] 이 알람에 해당하는 reminderId를 서버에서 못 찾았어요.", entry);
+        } else {
+          await touchAuth(reminderId);
+        }
+      } catch (e) {
+        console.error("[IotDisplay] 인증 실패:", e);
+        setVerifying(false);
+        return; // 서버 인증 실패했으면 로컬 상태도 "성공"으로 넘기지 않음
+      }
+      setVerifying(false);
+    }
 
     resolvedKeys.current.add(activeAlarmKey);
     outcomes.current.set(activeAlarmKey, "success");
@@ -331,6 +430,13 @@ export default function IotDisplay() {
       setTransition("toBloom");
     }
 
+    // 실제 최신 뉴스레터를 받아와서 보여줌 (실패하면 null로 남아서, 화면에서 안내 문구로 대체됨)
+    if (uid && !isTestAlarm) {
+      getLatestNewsletter(uid)
+        .then(setNewsletterContent)
+        .catch((e) => console.error("[IotDisplay] 뉴스레터 조회 실패:", e));
+    }
+
     setShowNewsletter(true);
   };
 
@@ -351,21 +457,42 @@ export default function IotDisplay() {
     wasAlarmWindow.current = bgAlarmActive;
   }, [bgAlarmActive]);
 
-  const videoSrc =
+  const activeFrames =
     transition === "toWilt"
-      ? bloomToWilt
+      ? BLOOM_TO_WILT_FRAMES
       : transition === "toBloom"
-      ? wiltToBloom
+      ? WILT_TO_BLOOM_FRAMES
       : null;
+
+  // 전환이 시작되면 0번 프레임부터, 일정 간격(FRAME_INTERVAL_MS)마다 다음 프레임으로 —
+  // 이미 다 preload된 이미지 배열이라 재생 중 네트워크를 아예 안 탐(버퍼링 자체가 불가능한 구조)
+  useEffect(() => {
+    if (!activeFrames) return;
+    console.log(`[전환 시작] ${transition}, 프레임 개수: ${activeFrames.length}, 간격: ${FRAME_INTERVAL_MS}ms, 예상 총 시간: ${(activeFrames.length * FRAME_INTERVAL_MS / 1000).toFixed(1)}초`);
+    setFrameIndex(0);
+    const id = setInterval(() => {
+      setFrameIndex((i) => {
+        if (i + 1 >= activeFrames.length) {
+          clearInterval(id);
+          console.log(`[전환 끝] 마지막 프레임(${i + 1}/${activeFrames.length})까지 재생 완료`);
+          handleTransitionEnd();
+          return i;
+        }
+        return i + 1;
+      });
+    }, FRAME_INTERVAL_MS);
+    return () => {
+      clearInterval(id);
+      console.log("[전환 effect 정리됨] — 중간에 재시작됐을 가능성");
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transition]);
 
   const { md, day } = formatDate(now);
 
   const cards = schedule.map((s) => {
-    const isResolved = resolvedKeys.current.has(s.key);
-
-    const outcome = isResolved
-      ? outcomes.current.get(s.key)
-      : "pending";
+    const outcome = resolveEntry(s, now.getTime());
+    const isResolved = outcome !== "pending";
 
     // "pending" | "success" | "missed"
     const status = isResolved
@@ -383,9 +510,11 @@ export default function IotDisplay() {
     let subtext = null;
     let subtextColor = "#9A9993";
 
+    // 카드 카운트다운은 각자 자기 시각 기준으로 독립적으로 뜸 (식물 상태만 activeAlarmKey 하나에 묶임)
     const isActiveAlarm =
       !isResolved &&
-      s.key === activeAlarmKey;
+      now.getTime() >= s.at.getTime() &&
+      now.getTime() < s.at.getTime() + stage2Ms;
 
     if (isActiveAlarm) {
       // 알림 시각부터 경과된 시간을
@@ -438,7 +567,7 @@ export default function IotDisplay() {
         width: "100vw",
         height: "100vh",
         overflow: "hidden",
-        background: "#000",
+        background: "#9FC3EC", // bgIdle 로딩 전 잠깐 보이는 기본색 — 검정 대신 파란 배경이랑 비슷한 톤으로 (덜 튀게)
         cursor: "pointer",
         fontFamily: "'NanumSquareRound', sans-serif",
       }}
@@ -446,6 +575,7 @@ export default function IotDisplay() {
       <img
         src={bgIdle}
         alt=""
+        fetchpriority="high"
         style={{
           position: "absolute",
           inset: 0,
@@ -453,7 +583,7 @@ export default function IotDisplay() {
           height: "100%",
           objectFit: "cover",
           opacity: bgAlarmActive ? 0 : 1,
-          transition: "opacity 1.2s ease",
+          transition: hasMounted ? "opacity 1.2s ease" : "none",
           zIndex: Z.bg,
         }}
       />
@@ -461,6 +591,7 @@ export default function IotDisplay() {
       <img
         src={bgAlarm}
         alt=""
+        fetchpriority="high"
         style={{
           position: "absolute",
           inset: 0,
@@ -468,10 +599,13 @@ export default function IotDisplay() {
           height: "100%",
           objectFit: "cover",
           opacity: bgAlarmActive ? 1 : 0,
-          transition: "opacity 1.2s ease",
+          transition: hasMounted ? "opacity 1.2s ease" : "none",
           zIndex: Z.bg,
         }}
       />
+
+      {/* 화면엔 안 보이지만, 마운트되자마자 미리 다운로드만 해두기 위한 숨김 배경 전환 영상 */}
+      <video src={bgChange} preload="auto" muted playsInline style={{ display: "none" }} />
 
       {bgVideoPlaying && (
         <video
@@ -563,38 +697,25 @@ export default function IotDisplay() {
           justifyContent: "center",
         }}
       >
-        {videoSrc ? (
-          <video
-            key={videoSrc}
-            src={videoSrc}
-            autoPlay
-            muted
-            playsInline
-            onEnded={handleTransitionEnd}
-            style={{
-              width: "39%",
-              maxWidth: 600,
-              transform: `translateY(${PLANT_OFFSET_Y}px)`,
-            }}
-          />
-        ) : (
-          <img
-            src={
-              plantState === "BLOOMING"
-                ? posterBloom
-                : posterWilt
-            }
-            alt=""
-            style={{
-              width: "39%",
-              maxWidth: 600,
-              objectFit: "contain",
-              filter:
-                "drop-shadow(-10px 6px 10px rgba(0,0,0,0.22))",
-              transform: `translateY(${PLANT_OFFSET_Y}px)`,
-            }}
-          />
-        )}
+        {/* activeFrames가 있으면(전환 중) 지금 프레임을, 없으면(평소) 정지 이미지를 보여줌 —
+            둘 다 이미 다운로드 끝난 <img>라서 전환 순간에 네트워크를 아예 안 타 깜빡일 수가 없음 */}
+        <img
+          src={
+            activeFrames
+              ? activeFrames[frameIndex]
+              : plantState === "BLOOMING"
+              ? posterBloom
+              : posterWilt
+          }
+          alt=""
+          style={{
+            width: "62%",
+            maxWidth: 960,
+            objectFit: "contain",
+            filter: "drop-shadow(-10px 6px 10px rgba(0,0,0,0.22))",
+            transform: `translateY(${PLANT_OFFSET_Y}px)`,
+          }}
+        />
       </div>
 
       {cards.length > 0 && (
@@ -678,18 +799,18 @@ export default function IotDisplay() {
                     {c.timeText}
                   </div>
 
-                  {c.subtext && (
-                    <div
-                      style={{
-                        fontSize: 16,
-                        fontWeight: 700,
-                        color: c.subtextColor,
-                        marginTop: 4,
-                      }}
-                    >
-                      {c.subtext}
-                    </div>
-                  )}
+                  {/* 카운트다운 있든 없든 카드 높이가 똑같이 유지되도록, 항상 렌더링하고 내용만 조건부로 */}
+                  <div
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 700,
+                      color: c.subtextColor,
+                      marginTop: 4,
+                      minHeight: 20,
+                    }}
+                  >
+                    {c.subtext || "\u00A0"}
+                  </div>
                 </div>
               </div>
             ))}
@@ -731,10 +852,14 @@ export default function IotDisplay() {
               fontWeight: 500,
             }}
           >
-            {MOCK_NEWSLETTER}
+            {newsletterContent
+              ? `${newsletterContent.title || ""}\n\n${newsletterContent.body || ""}${
+                  newsletterContent.tips?.length ? "\n\n" + newsletterContent.tips.map((t) => `· ${t}`).join("\n") : ""
+                }`
+              : MOCK_NEWSLETTER}
 
             <button
-              onClick={() => setShowNewsletter(false)}
+              onClick={() => { setShowNewsletter(false); setNewsletterContent(null); }}
               style={{
                 position: "absolute",
                 right: 36,
