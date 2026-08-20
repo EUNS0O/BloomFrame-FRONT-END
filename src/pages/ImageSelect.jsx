@@ -66,13 +66,25 @@ export default function ImageSelect() {
     );
   }
 
-  // 온보딩 / 알림 카테고리 추가 흐름
-  const finishCategory = () => {
-    if (wip.image !== DEFAULT_PLANT_INDEX) return showComingSoon();
-    commitCategory(wip);
-    if (onboarding) navigate("/onboarding/category/more");
-    else navigate("/home");
-  };
+  const [submitting, setSubmitting] = useState(false);
+
+    const finishCategory = () => {
+      if (submitting) return;
+
+      if (wip.image !== DEFAULT_PLANT_INDEX) {
+        return showComingSoon();
+      }
+
+      setSubmitting(true);
+
+      commitCategory(wip);
+
+      if (onboarding) {
+        navigate("/onboarding/category/more");
+      } else {
+        navigate("/home");
+      }
+    };
 
   return (
     <div style={{ flex: 1, padding: "0 30px 100px", overflowY: "auto" }}>
@@ -84,7 +96,13 @@ export default function ImageSelect() {
       </div>
       <ImageGrid selected={wip.image} onSelect={(i) => setWip((w) => ({ ...w, image: i }))} thumbnails={PLANT_THUMBNAILS} cellBg={{ 0: "#FFE2D0" }} imageScale={{ 0: 1.5 }} imageOffsetY={{ 0: -15 }} />
       <BottomButton>
-        <Btn disabled={wip.image == null} onClick={finishCategory} padding="10px 14px">확인</Btn>
+      <Btn
+        disabled={wip.image == null || submitting}
+        onClick={finishCategory}
+        padding="10px 14px"
+      >
+        확인
+      </Btn>
       </BottomButton>
     </div>
   );

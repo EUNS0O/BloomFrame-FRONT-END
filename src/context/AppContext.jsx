@@ -57,19 +57,42 @@ export function AppProvider({ children }) {
 
   const update = (patch) => setData((d) => ({ ...d, ...patch }));
 
-  // wip(작업 중인 카테고리)을 실제로 저장 — 이미 존재하는 id면 덮어쓰기(수정), 없으면 새로 추가
-  const commitCategory = (category) => {
-    setData((d) => {
-      const exists = d.categories.some((c) => c.id === category.id);
-      return {
-        ...d,
-        categories: exists
-          ? d.categories.map((c) => (c.id === category.id ? category : c))
-          : [...d.categories, category],
-      };
-    });
-    setWip(null);
-  };
+const commitCategory = (category) => {
+  setData((d) => {
+    const cleanedCategory = {
+      ...category,
+      times: (category.times || []).filter(
+        (time, index, arr) =>
+          index === arr.findIndex(
+            (t) =>
+              t.id === time.id ||
+              (
+                t.hour === time.hour &&
+                t.minute === time.minute &&
+                t.ampm === time.ampm
+              )
+          )
+      ),
+    };
+
+    const exists = d.categories.some(
+      (c) => c.id === category.id
+    );
+
+    return {
+      ...d,
+      categories: exists
+        ? d.categories.map((c) =>
+            c.id === category.id
+              ? cleanedCategory
+              : c
+          )
+        : [...d.categories, cleanedCategory],
+    };
+  });
+
+  setWip(null);
+};
 
   const resetAll = () => {
     setData(initialData);

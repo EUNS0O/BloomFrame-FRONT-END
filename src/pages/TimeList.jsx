@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import { C } from "../styles/tokens";
@@ -39,8 +39,13 @@ export default function TimeList() {
     navigate("/onboarding/time-single");
   };
 
+  const [submitting, setSubmitting] = useState(false);
+
   const handleConfirm = () => {
-    // 온보딩 중 "진짜 첫 항목"일 때만 IoT 이미지 선택 화면으로 — 이후엔 마이페이지에서 따로 바꿀 수 있어서 안 거침
+    if (submitting) return;
+
+    setSubmitting(true);
+
     if (onboarding && isFirstCategory) {
       navigate("/onboarding/image-select");
     } else {
@@ -100,7 +105,13 @@ export default function TimeList() {
       {/* 확인 버튼 — 스크롤 영역 밖, 불투명한 고정 자리. 리스트가 여기 뒤로 절대 안 비침 */}
       <div style={{ padding: "14px 30px 40px", background: C.bg, flexShrink: 0, display: "flex", justifyContent: "center" }}>
         <div style={{ width: 170 }}>
-          <Btn disabled={!times.length} onClick={handleConfirm} padding="10px 14px">확인</Btn>
+          <Btn
+            disabled={!times.length || submitting}
+            onClick={handleConfirm}
+            padding="10px 14px"
+          >
+            확인
+          </Btn>
         </div>
       </div>
     </div>

@@ -1,4 +1,6 @@
-let counter = 100;
+
+let counter = Date.now();
+
 export const nextId = () => ++counter;
 
 export function fmtTime(t) {

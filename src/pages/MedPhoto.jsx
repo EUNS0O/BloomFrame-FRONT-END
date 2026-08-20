@@ -18,6 +18,7 @@ export default function MedPhoto() {
 
   // 실제 연동 시: 촬영 이미지를 사진 분석 API로 전송하고 결과를 받아 채워 넣습니다.
   const handleCapture = () => {
+    if (analyzing) return;
     setAnalyzing(true);
     setTimeout(() => {
       setAnalyzing(false);
