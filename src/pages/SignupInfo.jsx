@@ -68,6 +68,7 @@ export default function SignupInfo() {
       } else {
         await signup({
           name: data.name,
+          age: data.age,
           guardianPhone: data.guardianPhone,
           selfPhone: data.selfPhone,
           email: data.email,

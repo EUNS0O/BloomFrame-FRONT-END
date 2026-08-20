@@ -27,6 +27,8 @@ export default function ImageSelect() {
   const navigate = useNavigate();
   const { onboarding, wip, setWip, setData, imageOnly, setImageOnly, commitCategory } = useApp();
   const [toastVisible, setToastVisible] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const toastTimer = useRef(null);
 
   if (!wip) return null;
@@ -66,9 +68,7 @@ export default function ImageSelect() {
     );
   }
 
-  const [submitting, setSubmitting] = useState(false);
-
-    const finishCategory = () => {
+    const finishCategory = async () => {
       if (submitting) return;
 
       if (wip.image !== DEFAULT_PLANT_INDEX) {
@@ -76,13 +76,18 @@ export default function ImageSelect() {
       }
 
       setSubmitting(true);
+      setSaveError("");
 
-      commitCategory(wip);
-
-      if (onboarding) {
-        navigate("/onboarding/category/more");
-      } else {
-        navigate("/home");
+      try {
+        await commitCategory(wip);
+        if (onboarding) {
+          navigate("/onboarding/category/more");
+        } else {
+          navigate("/home");
+        }
+      } catch (e) {
+        setSaveError(e.message || "저장하지 못했어요.");
+        setSubmitting(false);
       }
     };
 
@@ -95,6 +100,7 @@ export default function ImageSelect() {
         IoT 스크린에 들어갈 이미지를 선택해 주세요
       </div>
       <ImageGrid selected={wip.image} onSelect={(i) => setWip((w) => ({ ...w, image: i }))} thumbnails={PLANT_THUMBNAILS} cellBg={{ 0: "#FFE2D0" }} imageScale={{ 0: 1.5 }} imageOffsetY={{ 0: -15 }} />
+      {saveError && <div style={{ fontSize: 12.5, color: "#E5484D", textAlign: "center", marginTop: 12 }}>{saveError}</div>}
       <BottomButton>
       <Btn
         disabled={wip.image == null || submitting}

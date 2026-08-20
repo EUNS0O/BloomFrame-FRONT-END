@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import { C } from "../styles/tokens";
+import { logout as clearAuth } from "../api/auth";
 import { nextId } from "../utils/format";
 import { TopBar } from "../components/common/Layout";
 import { Card } from "../components/common/Controls";
@@ -36,6 +37,7 @@ export default function MyPage() {
   };
 
   const logout = () => {
+    clearAuth();
     resetAll();
     navigate("/");
   };
@@ -79,7 +81,7 @@ export default function MyPage() {
             </div>
             <img src={rightSmall} alt="" style={{ width: 8, height: "auto" }} />
           </Card>
-          <Card onClick={() => alert("건강 상태를 업데이트합니다.")} borderRadius={8} padding="10px 18px">
+          <Card onClick={() => navigate("/mypage/health")} borderRadius={8} padding="10px 18px">
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <img src={iconHealth} alt="" style={{ width: 26, height: 26 }} />
               <span style={{ fontWeight: 600, fontSize: 15 }}>건강 상태 업데이트</span>

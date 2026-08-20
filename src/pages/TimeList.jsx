@@ -40,17 +40,25 @@ export default function TimeList() {
   };
 
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (submitting) return;
 
     setSubmitting(true);
+    setError("");
 
-    if (onboarding && isFirstCategory) {
-      navigate("/onboarding/image-select");
-    } else {
-      commitCategory(wip);
+    try {
+      if (onboarding && isFirstCategory) {
+        setSubmitting(false);
+        navigate("/onboarding/image-select");
+        return;
+      }
+      await commitCategory(wip);
       navigate(onboarding ? "/onboarding/category/more" : "/home");
+    } catch (e) {
+      setError(e.message || "저장하지 못했어요.");
+      setSubmitting(false);
     }
   };
 
@@ -103,14 +111,15 @@ export default function TimeList() {
       </div>
 
       {/* 확인 버튼 — 스크롤 영역 밖, 불투명한 고정 자리. 리스트가 여기 뒤로 절대 안 비침 */}
-      <div style={{ padding: "14px 30px 40px", background: C.bg, flexShrink: 0, display: "flex", justifyContent: "center" }}>
+      <div style={{ padding: "14px 30px 40px", background: C.bg, flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center" }}>
+        {error && <div style={{ fontSize: 12.5, color: "#E5484D", marginBottom: 10 }}>{error}</div>}
         <div style={{ width: 170 }}>
           <Btn
             disabled={!times.length || submitting}
             onClick={handleConfirm}
             padding="10px 14px"
           >
-            확인
+            {submitting ? "저장 중..." : "확인"}
           </Btn>
         </div>
       </div>

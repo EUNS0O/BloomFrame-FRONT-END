@@ -59,7 +59,7 @@ export default function TimeSingle() {
   // 이미지 선택을 다시 안 거침
   const isFirstCategory = data.categories.length === 0;
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (submitting) return;
 
     const draft = wip.draftTime || {
@@ -106,15 +106,20 @@ export default function TimeSingle() {
           ],
         };
 
-    if (wip.type === "med") {
-      setWip(updatedWip);
-      navigate("/onboarding/time-list");
-    } else if (onboarding && isFirstCategory) {
-      setWip(updatedWip);
-      navigate("/onboarding/image-select");
-    } else {
-      commitCategory(updatedWip);
-      navigate(onboarding ? "/onboarding/category/more" : "/home");
+    try {
+      if (wip.type === "med") {
+        setWip(updatedWip);
+        navigate("/onboarding/time-list");
+      } else if (onboarding && isFirstCategory) {
+        setWip(updatedWip);
+        navigate("/onboarding/image-select");
+      } else {
+        await commitCategory(updatedWip);
+        navigate(onboarding ? "/onboarding/category/more" : "/home");
+      }
+    } catch (e) {
+      setError(e.message || "저장하지 못했어요.");
+      setSubmitting(false);
     }
   };
 

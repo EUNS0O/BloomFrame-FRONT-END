@@ -22,6 +22,8 @@ import IotDevices from "./pages/IotDevices";
 import IoTDeviceEdit from "./pages/IoTDeviceEdit";
 import MyPage from "./pages/MyPage";
 import MedList from "./pages/MedList";
+import HealthConditions from "./pages/HealthConditions";
+import HealthConditionEdit from "./pages/HealthConditionEdit";
 import Guide from "./pages/Guide";
 import Inquiry from "./pages/Inquiry";
 
@@ -60,6 +62,9 @@ function PhoneApp() {
 
         <Route path="/mypage" element={<MyPage />} />
         <Route path="/mypage/meds" element={<MedList />} />
+        <Route path="/mypage/health" element={<HealthConditions />} />
+        <Route path="/mypage/health/new" element={<HealthConditionEdit />} />
+        <Route path="/mypage/health/edit" element={<HealthConditionEdit />} />
         <Route path="/mypage/guide" element={<Guide />} />
         <Route path="/mypage/inquiry" element={<Inquiry />} />
 

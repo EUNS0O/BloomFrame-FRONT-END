@@ -26,13 +26,27 @@ export function toTodayDate(t) {
   );
 }
 
+function toDateString(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
 // 오늘 날짜를 YYYY-MM-DD 형식으로 반환
 export function getTodayDateString() {
-  const now = new Date();
+  return toDateString(new Date());
+}
 
-  return `${now.getFullYear()}-${String(
-    now.getMonth() + 1
-  ).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+// 등록 시각이 이미 지났으면 내일부터 적용 (TimeSingle과 동일)
+export function getAlarmStartDate(time, now = new Date()) {
+  const alarmDate = toTodayDate(time);
+  if (alarmDate < now) {
+    alarmDate.setDate(alarmDate.getDate() + 1);
+  }
+  return toDateString(alarmDate);
+}
+
+export function withStartDate(time) {
+  if (time?.startDate) return time;
+  return { ...time, startDate: getAlarmStartDate(time) };
 }
 
 // categories → 오늘 실제로 적용되는 알람만 시간순으로 펼친 배열

@@ -6,6 +6,7 @@ import { fmtTime } from "../utils/format";
 import { TopBar } from "../components/common/Layout";
 import { Btn } from "../components/common/Controls";
 import { BottomNav } from "../components/common/BottomNav";
+import { deleteAlarmOnServer } from "../api/scheduleSync";
 
 import medicineIconWhiteSmall from "../assets/medicine_icon_white_small.png";
 import gymIconWhiteSmall from "../assets/gym_icon_white_small.png";
@@ -38,17 +39,20 @@ export default function AlarmList() {
   /*
    * 알람 삭제
    */
-  const removeTime = (categoryId, timeId) => {
+  const removeTime = async (category, time) => {
+    try {
+      await deleteAlarmOnServer(category.type, time);
+    } catch (e) {
+      console.error(e);
+      return;
+    }
     setData((d) => ({
       ...d,
-
       categories: d.categories.map((cc) =>
-        cc.id === categoryId
+        cc.id === category.id
           ? {
               ...cc,
-              times: cc.times.filter(
-                (x) => x.id !== timeId
-              ),
+              times: cc.times.filter((x) => x.id !== time.id),
             }
           : cc
       ),
@@ -118,8 +122,8 @@ export default function AlarmList() {
   "현재 categories:",
   JSON.stringify(data.categories, null, 2)
 );
-  const allAlarms = data.categories.flatMap((category) =>
-    category.times.map((time) => ({
+  const allAlarms = (data.categories || []).flatMap((category) =>
+    (category.times || []).map((time) => ({
       key: `${category.id}-${time.id}`,
       category,
       time,
@@ -273,7 +277,7 @@ export default function AlarmList() {
 
                 <button
                   onClick={() =>
-                    removeTime(category.id, time.id)
+                    removeTime(category, time)
                   }
                   style={btnStyle}
                 >

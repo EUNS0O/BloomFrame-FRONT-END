@@ -5,11 +5,14 @@ import { TopBar } from "../components/common/Layout";
 import { Btn, Field } from "../components/common/Controls";
 import { BottomNav } from "../components/common/BottomNav";
 import { BottomButton } from "../components/common/BottomButton";
-import { login } from "../api/auth";
+import { login, getMe } from "../api/auth";
+import { loadSchedule } from "../api/scheduleSync";
+import { useApp } from "../context/AppContext";
 import backIcon from "../assets/back_icon.png";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { update, setOnboarding } = useApp();
   const [id, setId] = useState("");
   const [pw, setPw] = useState("");
   const [error, setError] = useState("");
@@ -23,8 +26,18 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      await login({ email: id.trim(), password: pw });
-      navigate("/home");
+        await login({ email: id.trim(), password: pw });
+        const me = await getMe().catch(() => null);
+        const schedule = await loadSchedule();
+        update({
+          name: me?.name || "",
+          guardianPhone: me?.guardianPhone || "",
+          selfPhone: me?.selfPhone || "",
+          email: me?.email || id.trim(),
+          categories: schedule.categories,
+        });
+        setOnboarding(false);
+        navigate("/home");
     } catch (e) {
       setError(e.message || "로그인에 실패했어요.");
     } finally {

@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { nextId } from "../utils/format";
+import { persistCategory } from "../api/scheduleSync";
+import { withStartDate } from "../utils/alarmStatus";
 
 const AppContext = createContext(null);
 
@@ -32,7 +34,13 @@ const initialData = {
 function loadInitialData() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (saved) return { ...initialData, ...saved };
+    if (saved) {
+      const categories = (saved.categories || []).map((category) => ({
+        ...category,
+        times: (category.times || []).map(withStartDate),
+      }));
+      return { ...initialData, ...saved, categories };
+    }
   } catch {
     // 저장된 값이 깨져있거나 localStorage를 못 쓰는 환경이면 그냥 기본값으로
   }
@@ -57,11 +65,12 @@ export function AppProvider({ children }) {
 
   const update = (patch) => setData((d) => ({ ...d, ...patch }));
 
-const commitCategory = (category) => {
+const commitCategory = async (category) => {
+  const saved = await persistCategory(category);
   setData((d) => {
     const cleanedCategory = {
-      ...category,
-      times: (category.times || []).filter(
+      ...saved,
+      times: (saved.times || []).filter(
         (time, index, arr) =>
           index === arr.findIndex(
             (t) =>
@@ -76,14 +85,14 @@ const commitCategory = (category) => {
     };
 
     const exists = d.categories.some(
-      (c) => c.id === category.id
+      (c) => c.id === saved.id
     );
 
     return {
       ...d,
       categories: exists
         ? d.categories.map((c) =>
-            c.id === category.id
+            c.id === saved.id
               ? cleanedCategory
               : c
           )
@@ -92,6 +101,7 @@ const commitCategory = (category) => {
   });
 
   setWip(null);
+  return saved;
 };
 
   const resetAll = () => {

@@ -1,13 +1,32 @@
 import { api, setToken, clearToken } from "./client";
 import { stripPhone } from "../utils/format";
 
-// 회원가입 — 명세엔 "나이" 필드가 없어서 안 보냄 (UI에만 남아있는 값)
-export async function signup({ name, guardianPhone, selfPhone, email, password }) {
+export async function sendCode(phone) {
+  return api.post("/api/v1/auth/send-code", { phone: stripPhone(phone) }, { auth: false });
+}
+
+export async function verifyCode(phone, code) {
+  return api.post(
+    "/api/v1/auth/verify-code",
+    { phone: stripPhone(phone), code },
+    { auth: false }
+  );
+}
+
+export async function signup({ name, age, guardianPhone, selfPhone, email, password }) {
+  const caregiverPhone = stripPhone(guardianPhone);
+  const sent = await sendCode(caregiverPhone);
+  if (!sent?.verificationCode) {
+    throw new Error("인증번호를 받아오지 못했어요.");
+  }
+  await verifyCode(caregiverPhone, sent.verificationCode);
+
   return api.post(
     "/api/v1/auth/signup",
     {
       name,
-      caregiverPhone: stripPhone(guardianPhone),
+      age: Number(age),
+      caregiverPhone,
       selfPhone: stripPhone(selfPhone),
       email,
       password,
