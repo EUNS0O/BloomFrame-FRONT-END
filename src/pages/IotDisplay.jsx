@@ -438,7 +438,7 @@ export default function IotDisplay() {
         width: "100vw",
         height: "100vh",
         overflow: "hidden",
-        background: "#000",
+        background: "#9FC3EC", // bgIdle 로딩 전 잠깐 보이는 기본색 — 검정 대신 파란 배경이랑 비슷한 톤으로 (덜 튀게)
         cursor: "pointer",
         fontFamily: "'NanumSquareRound', sans-serif",
       }}
@@ -446,6 +446,7 @@ export default function IotDisplay() {
       <img
         src={bgIdle}
         alt=""
+        fetchpriority="high"
         style={{
           position: "absolute",
           inset: 0,
@@ -461,6 +462,7 @@ export default function IotDisplay() {
       <img
         src={bgAlarm}
         alt=""
+        fetchpriority="high"
         style={{
           position: "absolute",
           inset: 0,
@@ -472,6 +474,13 @@ export default function IotDisplay() {
           zIndex: Z.bg,
         }}
       />
+
+      {/* 화면엔 안 보이지만, 마운트되자마자 미리 다운로드만 해두기 위한 숨김 영상들 —
+          실제로 재생 트리거될 때(bgVideoPlaying/transition) 그제서야 새로 받아오면
+          느린 네트워크에서 버퍼링 때문에 끊겨 보여서, 처음부터 미리 받아두는 용도 */}
+      <video src={bgChange} preload="auto" muted playsInline style={{ display: "none" }} />
+      <video src={bloomToWilt} preload="auto" muted playsInline style={{ display: "none" }} />
+      <video src={wiltToBloom} preload="auto" muted playsInline style={{ display: "none" }} />
 
       {bgVideoPlaying && (
         <video
@@ -678,18 +687,18 @@ export default function IotDisplay() {
                     {c.timeText}
                   </div>
 
-                  {c.subtext && (
-                    <div
-                      style={{
-                        fontSize: 16,
-                        fontWeight: 700,
-                        color: c.subtextColor,
-                        marginTop: 4,
-                      }}
-                    >
-                      {c.subtext}
-                    </div>
-                  )}
+                  {/* 카운트다운 있든 없든 카드 높이가 똑같이 유지되도록, 항상 렌더링하고 내용만 조건부로 */}
+                  <div
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 700,
+                      color: c.subtextColor,
+                      marginTop: 4,
+                      minHeight: 20,
+                    }}
+                  >
+                    {c.subtext || "\u00A0"}
+                  </div>
                 </div>
               </div>
             ))}
