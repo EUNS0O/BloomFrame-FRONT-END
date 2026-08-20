@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import { C } from "../styles/tokens";
+import { nextId } from "../utils/format";
 import { TopBar } from "../components/common/Layout";
 import { BottomNav } from "../components/common/BottomNav";
+import { getDevices, deleteDevice } from "../api/devices";
 import blackCloverSmall from "../assets/black_clover_small.png";
 
 export default function IotDevices() {
@@ -12,8 +14,39 @@ export default function IotDevices() {
   const editable = location.pathname.endsWith("/manage");
   const { data, setData } = useApp();
   const scrollId = React.useId().replace(/:/g, "");
+  const [deletingId, setDeletingId] = useState(null);
 
-  const removeDevice = (id) => setData((d) => ({ ...d, devices: d.devices.filter((x) => x.id !== id) }));
+  // 들어올 때마다 서버에 실제로 등록된 기기 목록을 다시 받아옴
+  useEffect(() => {
+    getDevices()
+      .then((list) => {
+        const devices = (Array.isArray(list) ? list : []).map((dev) => ({
+          id: nextId(),
+          serverId: dev.deviceUuid || dev.id,
+          name: dev.deviceName || dev.deviceUuid || dev.id,
+          desc: `인천에 있는 김인하의 IoT에 연결되어 있습니다`, // 명세에 별도 설명 필드가 없어서 기존 문구 유지
+        }));
+        setData((d) => ({ ...d, devices }));
+      })
+      .catch((e) => console.error("[IotDevices] 기기 목록 조회 실패:", e));
+  }, []);
+
+  const removeDevice = async (device) => {
+    if (deletingId) return;
+    if (!device.serverId) {
+      setData((d) => ({ ...d, devices: d.devices.filter((x) => x.id !== device.id) }));
+      return;
+    }
+    setDeletingId(device.id);
+    try {
+      await deleteDevice(device.serverId);
+      setData((d) => ({ ...d, devices: d.devices.filter((x) => x.id !== device.id) }));
+    } catch (e) {
+      alert(e.message || "기기 삭제에 실패했어요.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const btnStyle = { padding: "3px 12px", borderRadius: 20, border: "none", background: C.black, color: "#fff", fontSize: 9, fontWeight: 400, cursor: "pointer" };
 
@@ -49,7 +82,9 @@ export default function IotDevices() {
               {editable && (
                 <div style={{ display: "flex", gap:7 }}>
                   <button onClick={() => navigate(`/iot/manage/edit/${dev.id}`)} style={btnStyle}>수정</button>
-                  <button onClick={() => removeDevice(dev.id)} style={btnStyle}>삭제</button>
+                  <button onClick={() => removeDevice(dev)} disabled={deletingId === dev.id} style={{ ...btnStyle, opacity: deletingId === dev.id ? 0.5 : 1 }}>
+                    {deletingId === dev.id ? "삭제 중..." : "삭제"}
+                  </button>
                 </div>
               )}
             </div>

@@ -6,6 +6,7 @@ import { TopBar } from "../components/common/Layout";
 import { Btn } from "../components/common/Controls";
 import { BottomButton } from "../components/common/BottomButton";
 import { BottomNav } from "../components/common/BottomNav";
+import { renameDevice } from "../api/devices";
 
 export default function IotDeviceEdit() {
   const navigate = useNavigate();
@@ -14,16 +15,32 @@ export default function IotDeviceEdit() {
   const device = data.devices.find((d) => String(d.id) === id);
 
   const [name, setName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   if (!device) return null;
 
-  const handleConfirm = () => {
-    setData((d) => ({
-      ...d,
-      devices: d.devices.map((x) => (String(x.id) === id ? { ...x, name: name || device.name } : x)),
-    }));
-    setName("");
-    navigate(-1);
+  const handleConfirm = async () => {
+    if (submitting) return;
+    const newName = name || device.name;
+    setSubmitting(true);
+    setError("");
+
+    try {
+      if (device.serverId) {
+        await renameDevice(device.serverId, newName);
+      }
+      setData((d) => ({
+        ...d,
+        devices: d.devices.map((x) => (String(x.id) === id ? { ...x, name: newName } : x)),
+      }));
+      setName("");
+      navigate(-1);
+    } catch (e) {
+      setError(e.message || "기기 이름 수정에 실패했어요.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -51,9 +68,14 @@ export default function IotDeviceEdit() {
             fontSize: 15,
           }}
         />
+        {error && (
+          <div style={{ fontSize: 12.5, color: "#E5484D", marginTop: 12 }}>{error}</div>
+        )}
 
         <BottomButton variant="high">
-          <Btn onClick={handleConfirm}>확인</Btn>
+          <Btn disabled={submitting} onClick={handleConfirm}>
+            {submitting ? "저장 중..." : "확인"}
+          </Btn>
         </BottomButton>
       </div>
       <BottomNav />
