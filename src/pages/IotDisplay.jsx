@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import { getTodaySchedule, getAlarmStatus } from "../utils/alarmStatus";
 import { getMe } from "../api/auth";
-import { findReminderId, touchAuth } from "../api/reminders";
+import { findReminderIdWithRetry, touchAuth } from "../api/reminders";
 import { getLatestNewsletter } from "../api/newsletter";
 import { loadCategoriesFromServer, loadVerificationsFromServer } from "../api/sync";
 import bgIdle from "../assets/iot/bg_idle.webp";
@@ -237,6 +237,7 @@ const [showNewsletter, setShowNewsletter] = useState(false);
 const [newsletterContent, setNewsletterContent] = useState(null); // 실제 서버에서 받아온 뉴스레터 (없으면 안내 문구로 대체)
 const [uid, setUid] = useState(null);
 const [verifying, setVerifying] = useState(false);
+const [verificationError, setVerificationError] = useState("");
 const dataRef = useRef(data);
 useEffect(() => { dataRef.current = data; }, [data]); // 폴링이 항상 "지금 이 순간"의 data를 보게 함
  
@@ -248,27 +249,41 @@ useEffect(() => { dataRef.current = data; }, [data]); // 폴링이 항상 "지�
   }, []);
 
 useEffect(() => {
-  const sync = () => {
+  let categoryInFlight = false;
+  let verificationInFlight = false;
+  const syncCategories = () => {
+    if (categoryInFlight) return;
+    categoryInFlight = true;
     loadCategoriesFromServer(dataRef.current.categories)
       .then((categories) => update({ categories }))
-      .catch((e) => console.error("[IotDisplay] 알림 목록 조회 실패:", e));
+      .catch((e) => console.error("[IotDisplay] 알림 목록 조회 실패:", e))
+      .finally(() => { categoryInFlight = false; });
+  };
 
-    if (uid) {
+  const syncVerifications = () => {
+    if (uid && !verificationInFlight) {
+      verificationInFlight = true;
       loadVerificationsFromServer(uid)
         .then((verifications) => update({ verifications: { ...dataRef.current.verifications, ...verifications } }))
-        .catch((e) => console.error("[IotDisplay] 인증 기록 조회 실패:", e));
+        .catch((e) => console.error("[IotDisplay] 인증 기록 조회 실패:", e))
+        .finally(() => { verificationInFlight = false; });
     }
   };
 
-  let intervalId = null;
+  let categoryIntervalId = null;
+  let verificationIntervalId = null;
   const startPolling = () => {
-    if (intervalId) return;
-    sync();
-    intervalId = setInterval(sync, 45 * 1000);
+    if (categoryIntervalId || verificationIntervalId) return;
+    syncCategories();
+    syncVerifications();
+    categoryIntervalId = setInterval(syncCategories, 45 * 1000);
+    verificationIntervalId = setInterval(syncVerifications, 5 * 1000);
   };
   const stopPolling = () => {
-    if (intervalId) clearInterval(intervalId);
-    intervalId = null;
+    if (categoryIntervalId) clearInterval(categoryIntervalId);
+    if (verificationIntervalId) clearInterval(verificationIntervalId);
+    categoryIntervalId = null;
+    verificationIntervalId = null;
   };
   const handleVisibilityChange = () => {
     if (document.visibilityState === "visible") startPolling();
@@ -394,6 +409,7 @@ useEffect(() => {
     };
   }, [
     schedule,
+    data.verifications,
     plantState,
     stage1Ms,
     stage2Ms,
@@ -420,18 +436,20 @@ useEffect(() => {
 
     if (!isTestAlarm) {
       setVerifying(true);
+      setVerificationError("");
       try {
         const entry = schedule.find((s) => s.key === activeAlarmKey);
-        const reminderId = entry ? await findReminderId(entry.serverId, entry.label) : null;
+        const reminderId = entry
+          ? await findReminderIdWithRetry(entry.serverId, entry.label, entry.at)
+          : null;
 
         if (!reminderId) {
-          // 서버에 아직 이 시간에 대한 리마인더가 안 만들어졌거나(스케줄러 타이밍), 매칭 실패
-          console.warn("[IotDisplay] 이 알람에 해당하는 reminderId를 서버에서 못 찾았어요.", entry);
-        } else {
-          await touchAuth(reminderId);
+          throw new Error("서버에서 현재 알람을 확인하지 못했어요. 잠시 후 다시 터치해 주세요.");
         }
+        await touchAuth(reminderId);
       } catch (e) {
         console.error("[IotDisplay] 인증 실패:", e);
+        setVerificationError(e.message || "인증에 실패했어요. 다시 시도해 주세요.");
         setVerifying(false);
         return; // 서버 인증 실패했으면 로컬 상태도 "성공"으로 넘기지 않음
       }
@@ -598,6 +616,25 @@ useEffect(() => {
         fontFamily: "'NanumSquareRound', sans-serif",
       }}
     >
+      {verificationError && (
+        <div
+          style={{
+            position: "absolute",
+            top: 24,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: Z.newsletter + 1,
+            padding: "12px 18px",
+            borderRadius: 12,
+            background: "rgba(255,255,255,0.94)",
+            color: "#E5484D",
+            fontWeight: 700,
+            fontSize: 14,
+          }}
+        >
+          {verificationError}
+        </div>
+      )}
       <img
         src={bgIdle}
         alt=""

@@ -4,8 +4,8 @@ import { api } from "./client";
 export async function getMedicationAlarms() {
   return api.get("/api/v1/medication-alarms");
 }
-export async function createMedicationAlarm({ alarmTime }) {
-  return api.post("/api/v1/medication-alarms", { alarmTime });
+export async function createMedicationAlarm({ alarmTime, startDate }) {
+  return api.post("/api/v1/medication-alarms", { alarmTime, startDate });
 }
 export async function updateMedicationAlarm(alarmId, patch) {
   return api.patch(`/api/v1/medication-alarms/${alarmId}`, patch);
@@ -18,8 +18,8 @@ export async function deleteMedicationAlarm(alarmId) {
 export async function getExerciseAlarms() {
   return api.get("/api/v1/exercise-alarms");
 }
-export async function createExerciseAlarm({ exerciseName, alarmTime }) {
-  const body = { alarmTime };
+export async function createExerciseAlarm({ exerciseName, alarmTime, startDate }) {
+  const body = { alarmTime, startDate };
   if (exerciseName) body.exerciseName = exerciseName;
   return api.post("/api/v1/exercise-alarms", body);
 }
@@ -34,8 +34,8 @@ export async function deleteExerciseAlarm(alarmId) {
 export async function getCustomAlarms() {
   return api.get("/api/v1/custom-alarms");
 }
-export async function createCustomAlarm({ title, alarmTime }) {
-  const body = { alarmTime };
+export async function createCustomAlarm({ title, alarmTime, startDate }) {
+  const body = { alarmTime, startDate };
   if (title) body.title = title;
   return api.post("/api/v1/custom-alarms", body);
 }

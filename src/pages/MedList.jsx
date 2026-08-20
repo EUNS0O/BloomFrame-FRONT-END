@@ -4,18 +4,35 @@ import { useApp } from "../context/AppContext";
 import { C } from "../styles/tokens";
 import { TopBar } from "../components/common/Layout";
 import { BottomNav } from "../components/common/BottomNav";
+import { isMedicationPlaceholder } from "../api/medications";
 import medicineIconBlack from "../assets/medicine_icon_black.png";
 
 export default function MedList() {
   const navigate = useNavigate();
   const { data, setOnboarding, setWip } = useApp();
-  const meds = data.categories.filter((c) => c.type === "med").flatMap((c) => c.meds);
+  const meds = data.categories
+    .filter((c) => c.type === "med")
+    .flatMap((category) =>
+      category.meds
+        .filter((medication) => !isMedicationPlaceholder(medication))
+        .map((medication) => ({ medication, category }))
+    );
   const scrollId = React.useId().replace(/:/g, "");
 
   const addMed = () => {
     setOnboarding(false);
     setWip(null);
     navigate("/onboarding/category");
+  };
+
+  const editMed = (category, medication) => {
+    setOnboarding(false);
+    setWip({
+      ...category,
+      editingMedId: medication.id,
+      returnTo: "/mypage/meds",
+    });
+    navigate("/onboarding/med-edit");
   };
 
   return (
@@ -40,7 +57,7 @@ export default function MedList() {
 
         <div className={`vscroll-${scrollId}`} style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "0 35px" }}>
           {meds.length === 0 && <div style={{ fontSize: 13, color: C.gray, marginBottom: 16 }}>등록된 약이 없어요.</div>}
-          {meds.map((m) => (
+          {meds.map(({ medication: m, category }) => (
             <div
               key={m.id}
               style={{
@@ -56,7 +73,11 @@ export default function MedList() {
                   <div style={{ fontSize: 12.5, color: C.black, marginTop: 2 }}>1일 {m.freq}회 · {m.timing}</div>
                 </div>
               </div>
-              <button style={{ padding: "5px 12px", borderRadius: 20, border: "none", background: C.black, color: "#fff", fontSize: 11, fontWeight: 400, cursor: "pointer" }}>
+              <button
+                type="button"
+                onClick={() => editMed(category, m)}
+                style={{ padding: "5px 12px", borderRadius: 20, border: "none", background: C.black, color: "#fff", fontSize: 11, fontWeight: 400, cursor: "pointer" }}
+              >
                 수정
               </button>
             </div>

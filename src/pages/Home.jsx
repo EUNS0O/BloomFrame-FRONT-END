@@ -74,27 +74,41 @@ export default function Home() {
   }, []);
 
    useEffect(() => {
-    const sync = () => {
+    let categoryInFlight = false;
+    let verificationInFlight = false;
+    const syncCategories = () => {
+      if (categoryInFlight) return;
+      categoryInFlight = true;
       loadCategoriesFromServer(dataRef.current.categories)
         .then((categories) => setData((d) => ({ ...d, categories })))
-        .catch((e) => console.error("[Home] 알림 목록 조회 실패:", e));
+        .catch((e) => console.error("[Home] 알림 목록 조회 실패:", e))
+        .finally(() => { categoryInFlight = false; });
+    };
 
-      if (uid) {
+    const syncVerifications = () => {
+      if (uid && !verificationInFlight) {
+        verificationInFlight = true;
         loadVerificationsFromServer(uid)
           .then((verifications) => update({ verifications: { ...dataRef.current.verifications, ...verifications } }))
-          .catch((e) => console.error("[Home] 인증 기록 조회 실패:", e));
+          .catch((e) => console.error("[Home] 인증 기록 조회 실패:", e))
+          .finally(() => { verificationInFlight = false; });
       }
     };
 
-    let intervalId = null;
+    let categoryIntervalId = null;
+    let verificationIntervalId = null;
     const startPolling = () => {
-      if (intervalId) return;
-      sync();
-      intervalId = setInterval(sync, 45 * 1000);
+      if (categoryIntervalId || verificationIntervalId) return;
+      syncCategories();
+      syncVerifications();
+      categoryIntervalId = setInterval(syncCategories, 45 * 1000);
+      verificationIntervalId = setInterval(syncVerifications, 5 * 1000);
     };
     const stopPolling = () => {
-      if (intervalId) clearInterval(intervalId);
-      intervalId = null;
+      if (categoryIntervalId) clearInterval(categoryIntervalId);
+      if (verificationIntervalId) clearInterval(verificationIntervalId);
+      categoryIntervalId = null;
+      verificationIntervalId = null;
     };
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") startPolling();
@@ -115,7 +129,7 @@ export default function Home() {
   useEffect(() => {
     const id = setInterval(() => {
       setNow(new Date());
-    }, 60 * 1000);
+    }, 1000);
 
     return () => clearInterval(id);
   }, []);

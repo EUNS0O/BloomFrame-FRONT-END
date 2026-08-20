@@ -10,7 +10,7 @@ import { createMedication, updateMedication } from "../api/medications";
 
 export default function MedEdit() {
   const navigate = useNavigate();
-  const { onboarding, wip, setWip } = useApp();
+  const { onboarding, wip, setWip, setData } = useApp();
 
   if (!wip) return null;
 
@@ -47,11 +47,25 @@ export default function MedEdit() {
       return;
     }
 
-    setWip((w) => ({
-      ...w,
-      meds: w.meds.map((m) => (m.id === w.editingMedId ? { ...m, name, freq: freq || "1", timing } : m)),
-      editingMedId: null,
-    }));
+    const updatedMeds = wip.meds.map((m) =>
+      m.id === wip.editingMedId ? { ...m, name, freq: freq || "1", timing } : m
+    );
+
+    if (wip.returnTo) {
+      // 마이페이지에서 직접 수정한 경우 서버 저장 성공 후 전역 목록에도 바로 반영한다.
+      setData((current) => ({
+        ...current,
+        categories: current.categories.map((category) =>
+          category.id === wip.id ? { ...category, meds: updatedMeds } : category
+        ),
+      }));
+      const returnTo = wip.returnTo;
+      setWip(null);
+      navigate(returnTo);
+      return;
+    }
+
+    setWip({ ...wip, meds: updatedMeds, editingMedId: null });
     navigate("/onboarding/med-info");
   };
 

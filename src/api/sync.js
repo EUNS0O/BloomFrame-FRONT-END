@@ -22,8 +22,10 @@ export async function loadCategoriesFromServer(existingCategories = []) {
   ]);
 
  
-  if (failCount === 4) {
-    throw new Error("서버에서 알림 목록을 하나도 못 받아왔어요 (서버 다운 추정)");
+  // 일부 요청만 실패한 결과로 기존 전체 목록을 덮어쓰면, 실패한 종류의
+  // 알람과 로컬 startDate가 사라진다. 모든 조회가 성공했을 때만 교체한다.
+  if (failCount > 0) {
+    throw new Error("서버에서 일부 알림 목록을 불러오지 못했어요. 기존 목록을 유지합니다.");
   }
 
   const existingStartDate = {};
@@ -37,7 +39,10 @@ export async function loadCategoriesFromServer(existingCategories = []) {
     id: a.id,
     serverId: a.id,
     ...fromBackendTime(a.alarmTime),
-    ...(existingStartDate[a.id] ? { startDate: existingStartDate[a.id] } : {}),
+    // 서버 값을 기준으로 하고, 백엔드 배포 전 데이터에는 로컬 값을 임시 호환한다.
+    ...(a.startDate || existingStartDate[a.id]
+      ? { startDate: a.startDate || existingStartDate[a.id] }
+      : {}),
   });
 
   const categories = [];
@@ -81,7 +86,7 @@ export async function loadCategoriesFromServer(existingCategories = []) {
 
 export async function loadVerificationsFromServer(uid) {
   if (!uid) return {};
-  const logs = await getTodayAuthLogs(uid).catch(() => []);
+  const logs = await getTodayAuthLogs(uid);
   const verifications = {};
   (Array.isArray(logs) ? logs : []).forEach((log) => {
     if (log.status !== "SUCCESS") return;

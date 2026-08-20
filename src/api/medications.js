@@ -1,7 +1,14 @@
 import { api } from "./client";
 
+export function isMedicationPlaceholder(medication) {
+  return typeof medication?.name === "string" && medication.name.trim().startsWith("분석 중");
+}
+
 export async function getMedications() {
-  return api.get("/api/v1/medications");
+  const medications = await api.get("/api/v1/medications");
+  return (Array.isArray(medications) ? medications : []).filter(
+    (medication) => !isMedicationPlaceholder(medication)
+  );
 }
 
 export async function createMedication({ name, dosePerDay, timing, imageUrl = null }) {

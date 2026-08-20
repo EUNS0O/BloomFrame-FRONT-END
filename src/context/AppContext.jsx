@@ -55,6 +55,30 @@ export function AppProvider({ children }) {
     }
   }, [data]);
 
+  // 같은 브라우저의 다른 탭(IoT 화면/홈 화면)에서 알람 상태만 즉시 반영한다.
+  // 회원가입 입력값까지 통째로 교체하면 다른 탭의 오래된 값이 작성 중인 폼을 덮어쓸 수 있다.
+  useEffect(() => {
+    const handleStorage = (event) => {
+      if (event.key !== STORAGE_KEY || !event.newValue) return;
+      try {
+        const next = JSON.parse(event.newValue);
+        setData((current) => ({
+          ...current,
+          ...(Array.isArray(next.categories) ? { categories: next.categories } : {}),
+          verifications: {
+            ...current.verifications,
+            ...(next.verifications || {}),
+          },
+        }));
+      } catch {
+        // 깨진 저장 값은 무시하고 현재 정상 상태를 유지한다.
+      }
+    };
+
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
+
   const update = (patch) => setData((d) => ({ ...d, ...patch }));
 
 const commitCategory = (category) => {

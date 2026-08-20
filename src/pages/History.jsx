@@ -8,7 +8,7 @@ import { Btn } from "../components/common/Controls";
 import { BottomButton } from "../components/common/BottomButton";
 import { BottomNav } from "../components/common/BottomNav";
 import { getTodaySchedule, getAlarmStatus } from "../utils/alarmStatus";
-import { getRecord } from "../utils/historyStore";
+import { getRecord, saveTodayRecord } from "../utils/historyStore";
 import { loadCategoriesFromServer, loadVerificationsFromServer } from "../api/sync";
 import { getMe } from "../api/auth";
 import medicineIconGreen from "../assets/medicine_icon_green.webp";
@@ -27,13 +27,13 @@ const MISSED_ICON = { med: medicineIconRed, exercise: gymIconRed, other: clockIc
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 const WEEKS_IN_GRID = 6;
 
-const today = new Date();
-
 export default function History() {
   const navigate = useNavigate();
   const { data, update } = useApp();
   const scrollId = React.useId().replace(/:/g, "");
   const [uid, setUid] = useState(null);
+  const [now, setNow] = useState(new Date());
+  const today = now;
   const dataRef = useRef(data);
   useEffect(() => { dataRef.current = data; }, [data]); // 폴링이 항상 "지금 이 순간"의 data를 보게 함
 
@@ -47,27 +47,41 @@ export default function History() {
   // Home.jsx랑 동일한 패턴 — "오늘" 부분을 실시간으로 보여주는 화면이라 여기도 최신 데이터가 필요함
   // 화면이 안 보일 때는 폴링 멈춤
   useEffect(() => {
-    const sync = () => {
+    let categoryInFlight = false;
+    let verificationInFlight = false;
+    const syncCategories = () => {
+      if (categoryInFlight) return;
+      categoryInFlight = true;
       loadCategoriesFromServer(dataRef.current.categories)
         .then((categories) => update({ categories }))
-        .catch((e) => console.error("[History] 알림 목록 조회 실패:", e));
+        .catch((e) => console.error("[History] 알림 목록 조회 실패:", e))
+        .finally(() => { categoryInFlight = false; });
+    };
 
-      if (uid) {
+    const syncVerifications = () => {
+      if (uid && !verificationInFlight) {
+        verificationInFlight = true;
         loadVerificationsFromServer(uid)
           .then((verifications) => update({ verifications: { ...dataRef.current.verifications, ...verifications } }))
-          .catch((e) => console.error("[History] 인증 기록 조회 실패:", e));
+          .catch((e) => console.error("[History] 인증 기록 조회 실패:", e))
+          .finally(() => { verificationInFlight = false; });
       }
     };
 
-    let intervalId = null;
+    let categoryIntervalId = null;
+    let verificationIntervalId = null;
     const startPolling = () => {
-      if (intervalId) return;
-      sync();
-      intervalId = setInterval(sync, 45 * 1000);
+      if (categoryIntervalId || verificationIntervalId) return;
+      syncCategories();
+      syncVerifications();
+      categoryIntervalId = setInterval(syncCategories, 45 * 1000);
+      verificationIntervalId = setInterval(syncVerifications, 5 * 1000);
     };
     const stopPolling = () => {
-      if (intervalId) clearInterval(intervalId);
-      intervalId = null;
+      if (categoryIntervalId) clearInterval(categoryIntervalId);
+      if (verificationIntervalId) clearInterval(verificationIntervalId);
+      categoryIntervalId = null;
+      verificationIntervalId = null;
     };
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") startPolling();
@@ -83,6 +97,11 @@ export default function History() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid]);
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
 
   const [viewYear, setViewYear] = useState(today.getFullYear());
@@ -110,12 +129,16 @@ export default function History() {
     const todaySchedule = getTodaySchedule(data.categories);
     iconData = todaySchedule.map((entry) => ({
       type: entry.label,
-      status: getAlarmStatus(entry, data.verifications, new Date()),
+      status: getAlarmStatus(entry, data.verifications, now),
     }));
   } else {
     const stored = getRecord(selected.year, selected.month, selected.day);
     iconData = stored || []; // 기록이 없으면 빈 배열 (그 날은 앱을 안 썼다는 뜻)
   }
+
+  useEffect(() => {
+    if (isSelectedToday && iconData.length > 0) saveTodayRecord(iconData);
+  }, [isSelectedToday, JSON.stringify(iconData)]);
 
   return (
     <>
