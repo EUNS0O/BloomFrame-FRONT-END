@@ -24,6 +24,7 @@ import MyPage from "./pages/MyPage";
 import MedList from "./pages/MedList";
 import Guide from "./pages/Guide";
 import Inquiry from "./pages/Inquiry";
+import HealthCondition from "./pages/HealthCondition";
 
 // 태블릿에서 "액자"로 켜둘 화면 — 폰 목업(Frame) 밖에서 전체화면으로 렌더링됨
 import IotDisplay from "./pages/IotDisplay";
@@ -62,6 +63,8 @@ function PhoneApp() {
         <Route path="/mypage/meds" element={<MedList />} />
         <Route path="/mypage/guide" element={<Guide />} />
         <Route path="/mypage/inquiry" element={<Inquiry />} />
+
+        <Route path="/mypage/health" element={<HealthCondition />} />
 
         <Route path="*" element={<Splash />} />
       </Routes>
