@@ -6,8 +6,6 @@ import { getTodaySchedule } from "../utils/alarmStatus";
 import bgIdle from "../assets/iot/bg_idle.webp";
 import bgAlarm from "../assets/iot/bg_alarm.webp";
 import bgChange from "../assets/iot/bg_change.mp4";
-import bloomToWilt from "../assets/iot/bloom_to_wilt.webm";
-import wiltToBloom from "../assets/iot/wilt_to_bloom.webm";
 import posterBloom from "../assets/iot/poster_blooming.png";
 import posterWilt from "../assets/iot/poster_wilted.png";
 import medicineYellow from "../assets/iot/medicine_yellow.png";
@@ -16,6 +14,16 @@ import medicineRed from "../assets/iot/medicine_red.png";
 import gymBlue from "../assets/iot/gym_blue.png";
 import gymGreen from "../assets/iot/gym_green.png";
 import gymRed from "../assets/iot/gym_red.png";
+
+// 식물 전환 애니메이션 — 영상 대신 프레임(webp) 연속 재생 방식
+// (영상 버퍼링/디코딩 지연으로 인한 깜빡임을 원천 차단하기 위해, 미리 다 불러온 뒤 이미지만 빠르게 바꿔치기함)
+const BLOOM_TO_WILT_FRAMES = Object.values(
+  import.meta.glob("../assets/iot/frames/bloom_to_wilt/*.webp", { eager: true, import: "default" })
+);
+const WILT_TO_BLOOM_FRAMES = Object.values(
+  import.meta.glob("../assets/iot/frames/wilt_to_bloom/*.webp", { eager: true, import: "default" })
+);
+const FRAME_INTERVAL_MS = 1000 / 12; // 12fps로 뽑아둔 프레임이라 그 속도에 맞춤
 
 const Z = {
   bg: 0,
@@ -198,6 +206,7 @@ export default function IotDisplay() {
 
   const [plantState, setPlantState] = useState("BLOOMING");
   const [transition, setTransition] = useState(null);
+  const [frameIndex, setFrameIndex] = useState(0); // 지금 재생 중인 전환 애니메이션의 프레임 번호
   const [alarmPhase, setAlarmPhase] = useState(null);
   const [activeAlarmKey, setActiveAlarmKey] = useState(null);
   const [now, setNow] = useState(new Date());
@@ -351,12 +360,31 @@ export default function IotDisplay() {
     wasAlarmWindow.current = bgAlarmActive;
   }, [bgAlarmActive]);
 
-  const videoSrc =
+  const activeFrames =
     transition === "toWilt"
-      ? bloomToWilt
+      ? BLOOM_TO_WILT_FRAMES
       : transition === "toBloom"
-      ? wiltToBloom
+      ? WILT_TO_BLOOM_FRAMES
       : null;
+
+  // 전환이 시작되면 0번 프레임부터, 일정 간격(FRAME_INTERVAL_MS)마다 다음 프레임으로 —
+  // 이미 다 preload된 이미지 배열이라 재생 중 네트워크를 아예 안 탐(버퍼링 자체가 불가능한 구조)
+  useEffect(() => {
+    if (!activeFrames) return;
+    setFrameIndex(0);
+    const id = setInterval(() => {
+      setFrameIndex((i) => {
+        if (i + 1 >= activeFrames.length) {
+          clearInterval(id);
+          handleTransitionEnd();
+          return i;
+        }
+        return i + 1;
+      });
+    }, FRAME_INTERVAL_MS);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transition]);
 
   const { md, day } = formatDate(now);
 
@@ -475,12 +503,8 @@ export default function IotDisplay() {
         }}
       />
 
-      {/* 화면엔 안 보이지만, 마운트되자마자 미리 다운로드만 해두기 위한 숨김 영상들 —
-          실제로 재생 트리거될 때(bgVideoPlaying/transition) 그제서야 새로 받아오면
-          느린 네트워크에서 버퍼링 때문에 끊겨 보여서, 처음부터 미리 받아두는 용도 */}
+      {/* 화면엔 안 보이지만, 마운트되자마자 미리 다운로드만 해두기 위한 숨김 배경 전환 영상 */}
       <video src={bgChange} preload="auto" muted playsInline style={{ display: "none" }} />
-      <video src={bloomToWilt} preload="auto" muted playsInline style={{ display: "none" }} />
-      <video src={wiltToBloom} preload="auto" muted playsInline style={{ display: "none" }} />
 
       {bgVideoPlaying && (
         <video
@@ -572,38 +596,25 @@ export default function IotDisplay() {
           justifyContent: "center",
         }}
       >
-        {videoSrc ? (
-          <video
-            key={videoSrc}
-            src={videoSrc}
-            autoPlay
-            muted
-            playsInline
-            onEnded={handleTransitionEnd}
-            style={{
-              width: "39%",
-              maxWidth: 600,
-              transform: `translateY(${PLANT_OFFSET_Y}px)`,
-            }}
-          />
-        ) : (
-          <img
-            src={
-              plantState === "BLOOMING"
-                ? posterBloom
-                : posterWilt
-            }
-            alt=""
-            style={{
-              width: "39%",
-              maxWidth: 600,
-              objectFit: "contain",
-              filter:
-                "drop-shadow(-10px 6px 10px rgba(0,0,0,0.22))",
-              transform: `translateY(${PLANT_OFFSET_Y}px)`,
-            }}
-          />
-        )}
+        {/* activeFrames가 있으면(전환 중) 지금 프레임을, 없으면(평소) 정지 이미지를 보여줌 —
+            둘 다 이미 다운로드 끝난 <img>라서 전환 순간에 네트워크를 아예 안 타 깜빡일 수가 없음 */}
+        <img
+          src={
+            activeFrames
+              ? activeFrames[frameIndex]
+              : plantState === "BLOOMING"
+              ? posterBloom
+              : posterWilt
+          }
+          alt=""
+          style={{
+            width: "62%",
+            maxWidth: 960,
+            objectFit: "contain",
+            filter: "drop-shadow(-10px 6px 10px rgba(0,0,0,0.22))",
+            transform: `translateY(${PLANT_OFFSET_Y}px)`,
+          }}
+        />
       </div>
 
       {cards.length > 0 && (
