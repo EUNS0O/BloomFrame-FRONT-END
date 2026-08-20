@@ -69,18 +69,18 @@ export default function IotDevices() {
 
         <div className={`vscroll-${scrollId}`} style={{ flex: 1, overflowY: "auto", padding: "12px 25px" }}>
           {data.devices.map((dev) => (
-            <div key={dev.id} style={{ background: "#E8E8E8", borderRadius: 10, padding: "30px 18px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div key={dev.id} style={{ background: "#E8E8E8", borderRadius: 10, padding: "30px 18px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0, flex: 1 }}>
+                <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <img src={blackCloverSmall} alt="" style={{ width: 50, height: 50 }} />
                 </div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 16 }}>{dev.name}</div>
-                  <div style={{ fontSize: 9, color: C.black, maxWidth: 200, marginTop: 4 }}>{dev.desc}</div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, fontSize: 16, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dev.name}</div>
+                  <div style={{ fontSize: 9, color: C.black, maxWidth: 200, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dev.desc}</div>
                 </div>
               </div>
               {editable && (
-                <div style={{ display: "flex", gap:7 }}>
+                <div style={{ display: "flex", gap: 7, flexShrink: 0 }}>
                   <button onClick={() => navigate(`/iot/manage/edit/${dev.id}`)} style={btnStyle}>수정</button>
                   <button onClick={() => removeDevice(dev)} disabled={deletingId === dev.id} style={{ ...btnStyle, opacity: deletingId === dev.id ? 0.5 : 1 }}>
                     {deletingId === dev.id ? "삭제 중..." : "삭제"}
