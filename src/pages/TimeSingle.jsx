@@ -87,9 +87,9 @@ export default function TimeSingle() {
 
       if (wip.type === "med") {
         if (editingTime?.serverId) {
-          await updateMedicationAlarm(editingTime.serverId, { alarmTime });
+          await updateMedicationAlarm(editingTime.serverId, { alarmTime, startDate });
         } else {
-          const res = await createMedicationAlarm({ alarmTime });
+          const res = await createMedicationAlarm({ alarmTime, startDate });
           if (res?.id) draft.serverId = res.id;
         }
       } else {
@@ -97,13 +97,13 @@ export default function TimeSingle() {
 
         if (editingTime?.serverId) {
           // 기존에 등록된 알람 수정
-          if (isExercise) await updateExerciseAlarm(editingTime.serverId, { alarmTime });
-          else await updateCustomAlarm(editingTime.serverId, { alarmTime });
+          if (isExercise) await updateExerciseAlarm(editingTime.serverId, { alarmTime, startDate });
+          else await updateCustomAlarm(editingTime.serverId, { alarmTime, startDate });
         } else {
           // 새 알람 등록
           const res = isExercise
-            ? await createExerciseAlarm({ exerciseName: wip.name, alarmTime })
-            : await createCustomAlarm({ title: wip.name, alarmTime });
+            ? await createExerciseAlarm({ exerciseName: wip.name, alarmTime, startDate })
+            : await createCustomAlarm({ title: wip.name, alarmTime, startDate });
           // 서버가 새로 만들어준 id를 저장해둬야 나중에 수정/삭제할 때 씀
           if (res?.id) draft.serverId = res.id;
         }
