@@ -57,6 +57,7 @@ export function getTodaySchedule(categories) {
           key: `${c.id}-${t.id}`,
           at: toTodayDate(t),
           label: c.type,
+          serverId: t.serverId, // 인증 API 호출할 때 서버의 reminderId를 찾는 데 씀
         }))
     )
     .sort((a, b) => a.at - b.at);
