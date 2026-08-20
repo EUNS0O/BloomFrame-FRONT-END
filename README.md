@@ -226,23 +226,6 @@ npm run preview
 
 대기·성공·실패 상태의 카드를 한 화면에서 확인합니다. 테스트 모드는 실제 서버 인증 기록을 변경하지 않습니다.
 
-## 배포
-
-`main`은 최종 운영 배포, `develop`은 통합 테스트 및 Preview 배포에 사용합니다.
-
-- Develop Preview: [BloomFrame+ develop](https://bloomframe-git-develop-jangeunsu9505-4566s-projects.vercel.app)
-- Vercel의 Preview 및 Production 환경에 `VITE_API_BASE_URL`을 각각 설정해야 합니다.
-- 백엔드 CORS에는 실제로 사용하는 Vercel Origin을 등록해야 합니다.
-- SPA의 직접 경로 접근은 `vercel.json`의 rewrite 설정으로 처리합니다.
-
-## 개발 시 유의사항
-
-- API 기본 설정과 JWT 처리는 `src/api/client.js`에서 관리합니다.
-- 알람의 상태 키는 다중 기기에서 동일하게 매핑되도록 서버 ID를 기준으로 생성합니다.
-- 알람 목록 조회 일부가 실패하면 불완전한 결과로 기존 정상 데이터를 덮어쓰지 않습니다.
-- 인증 기록은 화면이 활성화된 동안 짧은 간격으로 동기화합니다.
-- `.env`와 `.env.local`은 저장소에 커밋하지 않습니다.
-
 ---
 
 <div align="center">
