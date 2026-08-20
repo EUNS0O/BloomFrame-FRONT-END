@@ -86,7 +86,7 @@ export async function loadCategoriesFromServer(existingCategories = []) {
 
 export async function loadVerificationsFromServer(uid) {
   if (!uid) return {};
-  const logs = await getTodayAuthLogs(uid).catch(() => []);
+  const logs = await getTodayAuthLogs(uid);
   const verifications = {};
   (Array.isArray(logs) ? logs : []).forEach((log) => {
     if (log.status !== "SUCCESS") return;

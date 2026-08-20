@@ -54,7 +54,9 @@ export function getTodaySchedule(categories) {
           return t.startDate <= today;
         })
         .map((t) => ({
-          key: `${c.id}-${t.id}`,
+          // 등록 직후의 로컬 id는 서버 동기화 후 바뀔 수 있다.
+          // 인증 로그의 targetId와 같은 serverId를 우선 사용해 상태 키를 안정적으로 유지한다.
+          key: `${c.id}-${t.serverId ?? t.id}`,
           at: toTodayDate(t),
           label: c.type,
           serverId: t.serverId, // 인증 API 호출할 때 서버의 reminderId를 찾는 데 씀

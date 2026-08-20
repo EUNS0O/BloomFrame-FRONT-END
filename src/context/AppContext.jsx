@@ -55,6 +55,22 @@ export function AppProvider({ children }) {
     }
   }, [data]);
 
+  // 같은 브라우저의 다른 탭(IoT 화면/홈 화면)에서 변경된 상태도 즉시 반영한다.
+  useEffect(() => {
+    const handleStorage = (event) => {
+      if (event.key !== STORAGE_KEY || !event.newValue) return;
+      try {
+        const next = JSON.parse(event.newValue);
+        setData({ ...initialData, ...next });
+      } catch {
+        // 깨진 저장 값은 무시하고 현재 정상 상태를 유지한다.
+      }
+    };
+
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
+
   const update = (patch) => setData((d) => ({ ...d, ...patch }));
 
 const commitCategory = (category) => {
