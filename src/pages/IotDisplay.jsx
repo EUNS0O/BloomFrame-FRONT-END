@@ -23,7 +23,7 @@ const BLOOM_TO_WILT_FRAMES = Object.values(
 const WILT_TO_BLOOM_FRAMES = Object.values(
   import.meta.glob("../assets/iot/frames/wilt_to_bloom/*.webp", { eager: true, import: "default" })
 );
-const FRAME_INTERVAL_MS = 1000 / 12; // 12fps로 뽑아둔 프레임이라 그 속도에 맞춤
+const FRAME_INTERVAL_MS = 1000 / 20; // 20fps로 뽑아둔 프레임이라 그 속도에 맞춤
 
 const Z = {
   bg: 0,
@@ -33,7 +33,7 @@ const Z = {
   newsletter: 4,
 };
 
-const PLANT_OFFSET_Y = -161;
+const PLANT_OFFSET_Y = -190;
 
 // 식물을 화면 정중앙에서 위로 옮기는 값
 // 음수 = 위로, 양수 = 아래로
@@ -206,7 +206,8 @@ export default function IotDisplay() {
 
   const [plantState, setPlantState] = useState("BLOOMING");
   const [transition, setTransition] = useState(null);
-  const [frameIndex, setFrameIndex] = useState(0); // 지금 재생 중인 전환 애니메이션의 프레임 번호
+  const [frameIndex, setFrameIndex] = useState(0);
+  const [hasMounted, setHasMounted] = useState(false); // 첫 렌더링에선 배경 opacity 트랜지션을 꺼서, "바뀌려다 마는" 것처럼 보이는 걸 방지 // 지금 재생 중인 전환 애니메이션의 프레임 번호
   const [alarmPhase, setAlarmPhase] = useState(null);
   const [activeAlarmKey, setActiveAlarmKey] = useState(null);
   const [now, setNow] = useState(new Date());
@@ -292,6 +293,7 @@ export default function IotDisplay() {
     };
 
     tick();
+    setHasMounted(true);
 
     const id = setInterval(tick, 1000);
 
@@ -482,7 +484,7 @@ export default function IotDisplay() {
           height: "100%",
           objectFit: "cover",
           opacity: bgAlarmActive ? 0 : 1,
-          transition: "opacity 1.2s ease",
+          transition: hasMounted ? "opacity 1.2s ease" : "none",
           zIndex: Z.bg,
         }}
       />
@@ -498,7 +500,7 @@ export default function IotDisplay() {
           height: "100%",
           objectFit: "cover",
           opacity: bgAlarmActive ? 1 : 0,
-          transition: "opacity 1.2s ease",
+          transition: hasMounted ? "opacity 1.2s ease" : "none",
           zIndex: Z.bg,
         }}
       />
