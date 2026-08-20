@@ -129,6 +129,17 @@ export default function IotDisplay() {
   const [searchParams] = useSearchParams();
   const scrollId = React.useId().replace(/:/g, "");
 
+  // 마운트되자마자 전환 프레임 전부를 미리 "디코딩"까지 끝내둠 —
+  // 파일만 받아두는 것과 달리, decode()까지 미리 해두면 실제 재생 중엔 화면에 그리기만 하면 돼서
+  // 느린 기기에서 재생하다가 버벅이는(디코딩 지연) 걸 막을 수 있음
+  useEffect(() => {
+    [...BLOOM_TO_WILT_FRAMES, ...WILT_TO_BLOOM_FRAMES].forEach((src) => {
+      const img = new Image();
+      img.src = src;
+      if (img.decode) img.decode().catch(() => {}); // 디코딩 실패해도(구형 브라우저 등) 무시하고 넘어감
+    });
+  }, []);
+
   const testIn = searchParams.get("testIn");
 
   const cardsTest = searchParams.get("cardsTest") === "1";
@@ -207,7 +218,8 @@ export default function IotDisplay() {
   const [plantState, setPlantState] = useState("BLOOMING");
   const [transition, setTransition] = useState(null);
   const [frameIndex, setFrameIndex] = useState(0);
-  const [hasMounted, setHasMounted] = useState(false); // 첫 렌더링에선 배경 opacity 트랜지션을 꺼서, "바뀌려다 마는" 것처럼 보이는 걸 방지 // 지금 재생 중인 전환 애니메이션의 프레임 번호
+  const [hasMounted, setHasMounted] = useState(false); // 첫 렌더링에선 배경 opacity 트랜지션을 꺼서, "바뀌려다 마는" 것처럼 보이는 걸 방지
+  const rafIds = useRef([]);
   const [alarmPhase, setAlarmPhase] = useState(null);
   const [activeAlarmKey, setActiveAlarmKey] = useState(null);
   const [now, setNow] = useState(new Date());
@@ -293,11 +305,22 @@ export default function IotDisplay() {
     };
 
     tick();
-    setHasMounted(true);
+
+    // hasMounted를 tick()이랑 같은 타이밍에 켜면, "진짜 첫 값"이 반영되는 그 렌더링부터 이미 트랜지션이 걸려서
+    // 오히려 그 첫 변화가 애니메이션으로 보여버림(=깜빡이는 것처럼). 최소 한 프레임 이상 늦춰서 켜야 함.
+    const raf1 = requestAnimationFrame(() => {
+      const raf2 = requestAnimationFrame(() => setHasMounted(true));
+      rafIds.current.push(raf2);
+    });
+    rafIds.current.push(raf1);
 
     const id = setInterval(tick, 1000);
 
-    return () => clearInterval(id);
+    return () => {
+      clearInterval(id);
+      rafIds.current.forEach((rid) => cancelAnimationFrame(rid));
+      rafIds.current = [];
+    };
   }, [
     schedule,
     plantState,
