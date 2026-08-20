@@ -1,4 +1,6 @@
-const BASE_URL = "http://1.201.116.60:8080";
+// 모든 백엔드 요청이 거치는 공통 지점.
+// .env 파일의 VITE_API_BASE_URL로 관리 — 로컬은 .env.local, 배포는 Vercel 환경변수 설정에서 넣어줘야 함
+const BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://1.201.116.60:8080").replace(/\/$/, ""); // 끝에 슬래시 있으면 제거 (경로 이어붙일 때 // 중복 방지)
 
 const TOKEN_KEY = "bloomframe_jwt";
 
@@ -46,7 +48,7 @@ async function request(path, { method = "GET", body, auth = true } = {}) {
   }
 
   if (!res.ok) {
-    const message = (data && data.message) || `요청에 실패했어요 (${res.status})`;
+    const message = extractErrorMessage(data) || `요청에 실패했어요 (${res.status})`;
     const error = new Error(message);
     error.status = res.status;
     error.data = data;
@@ -54,6 +56,23 @@ async function request(path, { method = "GET", body, auth = true } = {}) {
   }
 
   return data;
+}
+
+// 백엔드마다 에러 메시지를 담는 필드명이 달라서(message/error/errors/필드별 등), 흔한 형태들을 다 시도해봄
+function extractErrorMessage(data) {
+  if (!data || typeof data !== "object") return null;
+  if (data.message) return data.message;
+  if (data.error && typeof data.error === "string") return data.error;
+  if (Array.isArray(data.errors) && data.errors.length > 0) {
+    const first = data.errors[0];
+    return typeof first === "string" ? first : first.defaultMessage || first.message || JSON.stringify(first);
+  }
+  // { password: "비밀번호는 8자 이상이어야 합니다." } 같은 "필드명: 메시지" 형태(Spring 검증 에러 흔한 형태)
+  const values = Object.values(data);
+  if (values.length > 0 && values.every((v) => typeof v === "string")) {
+    return values.join(" / ");
+  }
+  return null;
 }
 
 export const api = {
