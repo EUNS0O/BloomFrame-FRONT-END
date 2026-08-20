@@ -7,7 +7,7 @@ import { BackHeader } from "../components/common/BackHeader";
 import { Btn } from "../components/common/Controls";
 import { BottomButton } from "../components/common/BottomButton";
 import { TimePicker } from "../components/widgets/TimePicker";
-import { createExerciseAlarm, updateExerciseAlarm, createCustomAlarm, updateCustomAlarm } from "../api/alarms";
+import { createExerciseAlarm, updateExerciseAlarm, createCustomAlarm, updateCustomAlarm, createMedicationAlarm, updateMedicationAlarm } from "../api/alarms";
 
 export default function TimeSingle() {
   const navigate = useNavigate();
@@ -83,10 +83,17 @@ export default function TimeSingle() {
     const alarmTime = toBackendTime(draft);
 
     try {
-      // 약(med)은 이 화면에서 직접 서버 호출 안 함 — TimeList.jsx에서 회차별로 따로 처리
-      if (wip.type !== "med") {
+      const editingTime = wip.editingTimeId ? currentTimes.find((t) => t.id === wip.editingTimeId) : null;
+
+      if (wip.type === "med") {
+        if (editingTime?.serverId) {
+          await updateMedicationAlarm(editingTime.serverId, { alarmTime });
+        } else {
+          const res = await createMedicationAlarm({ alarmTime });
+          if (res?.id) draft.serverId = res.id;
+        }
+      } else {
         const isExercise = wip.type === "exercise";
-        const editingTime = wip.editingTimeId ? currentTimes.find((t) => t.id === wip.editingTimeId) : null;
 
         if (editingTime?.serverId) {
           // 기존에 등록된 알람 수정
