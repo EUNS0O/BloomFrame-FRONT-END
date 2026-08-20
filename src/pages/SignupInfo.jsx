@@ -231,7 +231,7 @@ export default function SignupInfo() {
             {verifyingCode && <div style={{ fontSize: 12, color: C.gray, marginTop: 6 }}>확인 중...</div>}
             {phoneError && <div style={{ fontSize: 12, color: "#E5484D", marginTop: 6 }}>{phoneError}</div>}
             {phoneVerified && (
-              <div style={{ fontSize: 12, color: "#3CAE6B", fontWeight: 700, marginTop: 6 }}>✓ 인증 완료</div>
+              <div style={{ fontSize: 12, color: "#FE731C", fontWeight: 700, marginTop: 6 }}>✓ 인증 완료</div>
             )}
           </div>
         )}
