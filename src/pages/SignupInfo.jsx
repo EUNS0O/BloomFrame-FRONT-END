@@ -205,12 +205,18 @@ export default function SignupInfo() {
 
         {showPhoneVerifyButton && (
           <button
+            type="button"
             onClick={handleSendCode}
             disabled={sendingCode}
             style={{ display: "block", width: "95%", margin: "0 auto", padding: "6px 13px", borderRadius: 6, border: "none", background: C.black, color: "#fff", fontSize: 13.5, fontWeight: 700, marginBottom: FIELD_MB, cursor: sendingCode ? "default" : "pointer", opacity: sendingCode ? 0.6 : 1 }}
           >
             {sendingCode ? "발송 중..." : "휴대폰 번호 인증하기"}
           </button>
+        )}
+        {phoneError && !data.phoneVerifying && (
+          <div style={{ width: "95%", margin: `-${FIELD_MB - 6}px auto ${FIELD_MB}px`, fontSize: 12, color: "#E5484D" }}>
+            {phoneError}
+          </div>
         )}
         {data.phoneVerifying && (
           <div style={{ width: "95%", margin: "0 auto", marginBottom: FIELD_MB }}>
