@@ -1,5 +1,8 @@
 <div align="center">
-  <img src="src/assets/logo_black.png" alt="BloomFrame+" width="220" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="src/assets/logo_white.webp" />
+    <img src="src/assets/logo_black.png" alt="BloomFrame+" width="220" />
+  </picture>
 
   <br />
   <br />
@@ -24,6 +27,51 @@
 BloomFrame+는 약 복용, 운동, 사용자 지정 일정처럼 매일 반복되는 건강 습관을 관리하는 서비스입니다. 보호자는 모바일 웹에서 일정을 등록하고 이행 기록을 확인하며, 시니어는 연결된 IoT 디스플레이를 통해 다가오는 일정을 직관적으로 확인하고 터치로 수행을 인증할 수 있습니다.
 
 알림을 제시간에 수행하면 시든 꽃이 다시 피어나는 시각적 피드백을 제공해, 건강 관리를 단순한 체크리스트가 아닌 지속 가능한 경험으로 만듭니다.
+
+## 서비스 미리보기
+
+### 모바일 앱
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/splash.png" alt="BloomFrame+ 시작 화면" width="210" /></td>
+    <td align="center"><img src="docs/images/home.png" alt="오늘의 알람 현황" width="210" /></td>
+    <td align="center"><img src="docs/images/history.png" alt="이전 알람 기록" width="210" /></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>시작 화면</strong></td>
+    <td align="center"><strong>오늘의 알람</strong></td>
+    <td align="center"><strong>이전 기록</strong></td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/medication-scan.png" alt="약봉지 AI 촬영" width="210" /></td>
+    <td align="center"><img src="docs/images/medication-review.png" alt="인식된 약 정보 확인" width="210" /></td>
+    <td align="center"><img src="docs/images/device-management.png" alt="IoT 기기 관리" width="210" /></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>약봉지 AI 촬영</strong></td>
+    <td align="center"><strong>약 정보 확인</strong></td>
+    <td align="center"><strong>IoT 기기 관리</strong></td>
+  </tr>
+</table>
+
+### IoT 디스플레이
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/iot-idle.png" alt="IoT 평상시 화면" width="260" /></td>
+    <td align="center"><img src="docs/images/iot-alarm.png" alt="IoT 알람 임박 화면" width="260" /></td>
+    <td align="center"><img src="docs/images/iot-newsletter.png" alt="IoT 맞춤 정보 화면" width="260" /></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>평상시</strong></td>
+    <td align="center"><strong>알람 임박</strong></td>
+    <td align="center"><strong>맞춤 건강 정보</strong></td>
+  </tr>
+</table>
 
 ## 주요 기능
 
