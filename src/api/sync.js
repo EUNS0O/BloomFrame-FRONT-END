@@ -3,30 +3,28 @@ import { getMedicationAlarms, getExerciseAlarms, getCustomAlarms } from "./alarm
 import { getTodayAuthLogs } from "./authLogs";
 import { fromBackendTime } from "../utils/format";
 
-// 카테고리 id 규칙(loadCategoriesFromServer랑 동일)과 서버의 type 표기(MEDICATION/EXERCISE/CUSTOM)를 서로 연결
 const CATEGORY_ID_BY_BACKEND_TYPE = {
   MEDICATION: "cat-med",
   EXERCISE: "cat-exercise",
   CUSTOM: "cat-other",
 };
 
-// 서버에 있는 약/운동/기타 정보를 전부 불러와서, 우리 앱 내부에서 쓰는 categories 형태로 변환
-// (medication-alarms는 특정 약에 안 묶여있는 구조라, "약" 카테고리 하나가 meds 목록 + 공용 times를 같이 가짐)
-//
-// ⚠️ id는 매번 새로 만들지 않고 서버 id(serverId)를 그대로 씀 — 안 그러면 새로고침할 때마다
-// 같은 알람인데도 "키"가 바뀌어서, 오늘 이미 인증한 기록이 다시 "대기 중"으로 보이는 버그가 생김.
-// 카테고리 id도 타입별로 고정값 사용(우리 구조상 타입당 카테고리가 하나뿐이라 안전함).
-// ⚠️ existingCategories를 넘기면, 서버엔 없는 "내일부터 적용"(startDate) 정보를
-// 같은 알람(serverId 기준)의 기존 로컬 값에서 그대로 이어받음 — 안 그러면 폴링 돌 때마다 이 정보가 사라져서
-// "오늘 지난 시각은 내일부터" 기능이 45초 안에 무효화되는 버그가 생김
+
 export async function loadCategoriesFromServer(existingCategories = []) {
+  let failCount = 0;
+  const safe = (promise) => promise.catch(() => { failCount += 1; return []; });
 
   const [medications, medAlarms, exerciseAlarms, customAlarms] = await Promise.all([
-    getMedications().catch(() => []),
-    getMedicationAlarms().catch(() => []),
-    getExerciseAlarms().catch(() => []),
-    getCustomAlarms().catch(() => []),
+    safe(getMedications()),
+    safe(getMedicationAlarms()),
+    safe(getExerciseAlarms()),
+    safe(getCustomAlarms()),
   ]);
+
+ 
+  if (failCount === 4) {
+    throw new Error("서버에서 알림 목록을 하나도 못 받아왔어요 (서버 다운 추정)");
+  }
 
   const existingStartDate = {};
   existingCategories.forEach((c) => {
@@ -77,12 +75,10 @@ export async function loadCategoriesFromServer(existingCategories = []) {
     });
   }
 
-
   return categories;
 }
 
-// 서버의 인증 로그(auth-logs)를 우리 앱이 쓰는 verifications 형태({ [key]: "success" })로 변환
-// — 다른 기기(예: 태블릿)에서 인증한 것도 이걸로 폰에서 알 수 있게 됨
+
 export async function loadVerificationsFromServer(uid) {
   if (!uid) return {};
   const logs = await getTodayAuthLogs(uid).catch(() => []);

@@ -47,7 +47,7 @@ export default function MedPhoto() {
 
     try {
       // 1) AI 분석 API가 "이미 존재하는 medicationId"를 경로에 요구해서, 빈 약 하나를 먼저 만들어 id를 받음
-      const placeholder = await createMedication({ name: "분석 중...", dosePerDay: 1, timing: "" });
+      const placeholder = await createMedication({ name: "분석 중...", dosePerDay: 1, timing: "확인 중" });
       // 2) 그 id 위에 사진을 올려서 실제 AI 분석 실행 (한 장에 여러 약이 있으면 여러 개로 돌아옴)
       const result = await analyzeMedicationPhoto(placeholder.id, file);
       const analyzed = Array.isArray(result?.medications) ? result.medications : [];
