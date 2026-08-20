@@ -112,7 +112,7 @@ export default function SignupInfo() {
     setLoading(true);
     try {
       if (accountEditMode) {
-        await updateMe({ name: data.name, guardianPhone: data.guardianPhone, selfPhone: data.selfPhone });
+        await updateMe({ name: data.name, age: data.age, guardianPhone: data.guardianPhone, selfPhone: data.selfPhone });
         setAccountEditMode(false);
         navigate("/mypage"); // 온보딩으로 새지 않고 마이페이지로 복귀
       } else {

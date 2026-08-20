@@ -50,6 +50,7 @@ export async function getMe() {
   return {
     uid: data.id, // 뉴스레터 등 {uid}가 경로에 들어가는 API에서 씀
     name: data.name,
+    age: data.age !== undefined && data.age !== null ? String(data.age) : "",
     guardianPhone: data.caregiverPhone,
     selfPhone: data.selfPhone,
     email: data.email,
@@ -60,6 +61,7 @@ export async function getMe() {
 export async function updateMe(patch) {
   const body = {};
   if (patch.name !== undefined) body.name = patch.name;
+  if (patch.age !== undefined) body.age = Number(patch.age);
   if (patch.guardianPhone !== undefined) body.caregiverPhone = stripPhone(patch.guardianPhone);
   if (patch.selfPhone !== undefined) body.selfPhone = stripPhone(patch.selfPhone);
   return api.patch("/api/v1/users/me", body);
