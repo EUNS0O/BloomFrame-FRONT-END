@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import { C } from "../styles/tokens";
 import { fmtTime } from "../utils/format";
+import { toTodayDate } from "../utils/alarmStatus";
 import { TopBar } from "../components/common/Layout";
 import { Btn } from "../components/common/Controls";
 import { BottomNav } from "../components/common/BottomNav";
@@ -136,13 +137,15 @@ export default function AlarmList() {
    * 따라서 startDate가 내일인 알람도
    * "등록된 알람"이므로 목록에 표시됨.
    */
-  const allAlarms = data.categories.flatMap((category) =>
-    category.times.map((time) => ({
-      key: `${category.id}-${time.id}`,
-      category,
-      time,
-    }))
-  );
+  const allAlarms = data.categories
+    .flatMap((category) =>
+      category.times.map((time) => ({
+        key: `${category.id}-${time.id}`,
+        category,
+        time,
+      }))
+    )
+    .sort((a, b) => toTodayDate(a.time) - toTodayDate(b.time)); // 시간순 정렬 — 서버에서 받아온 순서(등록 순서)와 무관하게 항상 시간순으로 보여줌
 
   return (
     <div

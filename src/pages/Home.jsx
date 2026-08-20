@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import { C } from "../styles/tokens";
@@ -24,8 +24,7 @@ import gymIconWhiteSmall from "../assets/gym_icon_white_small.png";
 import clockIconWhiteSmall from "../assets/clock_icon_white_small.png";
 import rightSmall from "../assets/right_small.png";
 
-// 카테고리 타입별 아이콘 매핑
-// 대기 / 성공 / 실패
+
 const PENDING_ICON = {
   med: medicineIconSmall,
   exercise: gymIconSmall,
@@ -64,33 +63,32 @@ export default function Home() {
 
   const [now, setNow] = useState(new Date());
   const [uid, setUid] = useState(null);
+  const dataRef = useRef(data);
+  useEffect(() => { dataRef.current = data; }, [data]); 
 
-  // 홈 화면 진입 시 내 uid 확보 (인증 로그 조회에 필요)
+
   useEffect(() => {
     getMe()
       .then((me) => setUid(me.uid))
       .catch((e) => console.error("[Home] 내 정보 조회 실패:", e));
   }, []);
 
-  // 홈 화면 들어올 때 + 이후 45초마다 서버에서 최신 알림 목록/인증 기록을 다시 받아와서 반영 —
-  // 다른 기기(예: 태블릿)에서 등록/수정/삭제/인증한 것도 이 폴링을 통해 시간차를 두고 반영됨
-  // 화면이 안 보일 때(다른 탭/앱으로 전환, 화면 꺼짐)는 폴링을 완전히 멈춰서 불필요한 서버 요청을 막음
-  useEffect(() => {
+   useEffect(() => {
     const sync = () => {
-      loadCategoriesFromServer()
+      loadCategoriesFromServer(dataRef.current.categories)
         .then((categories) => setData((d) => ({ ...d, categories })))
         .catch((e) => console.error("[Home] 알림 목록 조회 실패:", e));
 
       if (uid) {
         loadVerificationsFromServer(uid)
-          .then((verifications) => update({ verifications: { ...data.verifications, ...verifications } }))
+          .then((verifications) => update({ verifications: { ...dataRef.current.verifications, ...verifications } }))
           .catch((e) => console.error("[Home] 인증 기록 조회 실패:", e));
       }
     };
 
     let intervalId = null;
     const startPolling = () => {
-      if (intervalId) return; // 이미 돌고 있으면 중복 시작 방지
+      if (intervalId) return;
       sync();
       intervalId = setInterval(sync, 45 * 1000);
     };
@@ -110,11 +108,10 @@ export default function Home() {
       stopPolling();
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [uid]);
 
-  // 1분마다 현재 시간을 갱신
-  // "대기" → "실패" 상태가 화면에 반영되도록 함
+  
   useEffect(() => {
     const id = setInterval(() => {
       setNow(new Date());
@@ -129,23 +126,7 @@ export default function Home() {
     navigate("/onboarding/category");
   };
 
-  /*
-   * ------------------------------------------------------------
-   * 1. 등록된 전체 알람 개수
-   * ------------------------------------------------------------
-   *
-   * 이 부분은 "오늘 적용되는 알람"이 아니라
-   * 사용자가 현재 등록해 둔 모든 알람을 기준으로 함.
-   *
-   * 예:
-   * 현재 14:00
-   *
-   * 10:00 → 내일부터 적용
-   * 15:00 → 오늘부터 적용
-   *
-   * 두 알람 모두 등록된 알람이므로
-   * 홈의 "알림 목록"에서는 2건으로 표시.
-   */
+  
   const grouped = [];
 
   data.categories.forEach((c) => {
@@ -161,29 +142,10 @@ export default function Home() {
     }
   });
 
-  /*
-   * ------------------------------------------------------------
-   * 2. 오늘 실제로 적용되는 알람
-   * ------------------------------------------------------------
-   *
-   * getTodaySchedule()은 startDate를 기준으로
-   * 오늘 적용되는 알람만 반환.
-   *
-   * 따라서:
-   * - 등록된 전체 알람 → grouped
-   * - 오늘 적용되는 알람 → todaySchedule
-   *
-   * 로 역할을 분리함.
-   */
+  
   const todaySchedule = getTodaySchedule(data.categories);
 
-  /*
-   * 오늘 적용되는 알람 각각의 상태 계산
-   *
-   * pending  → 아직 인증하지 않았고 10분이 지나지 않음
-   * success  → 인증 완료
-   * missed   → 10분이 지나도록 인증하지 않음
-   */
+  
   const iconData = todaySchedule.map((entry) => ({
     type: entry.label,
     status: getAlarmStatus(
@@ -193,10 +155,7 @@ export default function Home() {
     ),
   }));
 
-  /*
-   * 오늘 알람의 상태를 기록
-   * History.jsx에서 이전 기록을 조회할 때 사용
-   */
+  
   useEffect(() => {
     if (iconData.length > 0) {
       saveTodayRecord(iconData);

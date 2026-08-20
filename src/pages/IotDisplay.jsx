@@ -233,16 +233,14 @@ export default function IotDisplay() {
   const [now, setNow] = useState(new Date());
   const [bgVideoPlaying, setBgVideoPlaying] = useState(false);
   const [bgAlarmActive, setBgAlarmActive] = useState(false);
-
-  // 배경 전용
-  // 알림 정각보다 preAlarmMs만큼 일찍 켜짐
-
-  const [showNewsletter, setShowNewsletter] = useState(false);
-  const [newsletterContent, setNewsletterContent] = useState(null); // 실제 서버에서 받아온 뉴스레터 (없으면 안내 문구로 대체)
-  const [uid, setUid] = useState(null);
-  const [verifying, setVerifying] = useState(false);
-
-  // 태블릿(IoT 화면)은 마이페이지를 거쳐서 들어오는 게 아닐 수도 있어서, 여기서 따로 내 uid를 받아둠
+const [showNewsletter, setShowNewsletter] = useState(false);
+const [newsletterContent, setNewsletterContent] = useState(null); // 실제 서버에서 받아온 뉴스레터 (없으면 안내 문구로 대체)
+const [uid, setUid] = useState(null);
+const [verifying, setVerifying] = useState(false);
+const dataRef = useRef(data);
+useEffect(() => { dataRef.current = data; }, [data]); // 폴링이 항상 "지금 이 순간"의 data를 보게 함
+ 
+ 
   useEffect(() => {
     getMe()
       .then((me) => setUid(me.uid))
@@ -251,13 +249,13 @@ export default function IotDisplay() {
 
 useEffect(() => {
   const sync = () => {
-    loadCategoriesFromServer()
+    loadCategoriesFromServer(dataRef.current.categories)
       .then((categories) => update({ categories }))
       .catch((e) => console.error("[IotDisplay] 알림 목록 조회 실패:", e));
 
     if (uid) {
       loadVerificationsFromServer(uid)
-        .then((verifications) => update({ verifications: { ...data.verifications, ...verifications } }))
+        .then((verifications) => update({ verifications: { ...dataRef.current.verifications, ...verifications } }))
         .catch((e) => console.error("[IotDisplay] 인증 기록 조회 실패:", e));
     }
   };

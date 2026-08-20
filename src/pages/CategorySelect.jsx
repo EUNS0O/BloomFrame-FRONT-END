@@ -31,17 +31,29 @@ export default function CategorySelect() {
   const navigate = useNavigate();
   const location = useLocation();
   const isMore = location.pathname.endsWith("/more");
-  const { onboarding, setWip } = useApp();
+  const { data, onboarding, setWip } = useApp();
   const [selected, setSelected] = useState(null); // 현재 주황색으로 선택된 카테고리 key
 
   const pickCategory = (type) => {
     setSelected(type);
     setTimeout(() => {
+      // 같은 타입 카테고리가 이미 등록되어 있으면 그 데이터를 그대로 이어받음 —
+      // 안 그러면 매번 빈 목록으로 새로 시작해서, 중복 시간 등록 검사가 비교할 대상이 없어 항상 통과되는 버그가 생김
+      const existing = data.categories.find((c) => c.type === type);
+
       if (type === "med") {
-        setWip({ id: nextId(), type, meds: [], times: [], image: null });
+        setWip(
+          existing
+            ? { ...existing }
+            : { id: nextId(), type, meds: [], times: [], image: null }
+        );
         navigate("/onboarding/med-photo");
       } else {
-        setWip({ id: nextId(), type, name: CATEGORY_META[type].label, times: [], image: null, draftTime: { hour: 1, minute: 0, ampm: "오전" } });
+        setWip(
+          existing
+            ? { ...existing, draftTime: { hour: 1, minute: 0, ampm: "오전" } }
+            : { id: nextId(), type, name: CATEGORY_META[type].label, times: [], image: null, draftTime: { hour: 1, minute: 0, ampm: "오전" } }
+        );
         navigate("/onboarding/time-single");
       }
     }, 180);

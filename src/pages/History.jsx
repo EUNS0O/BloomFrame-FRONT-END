@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useApp } from "../context/AppContext";
@@ -34,6 +34,8 @@ export default function History() {
   const { data, update } = useApp();
   const scrollId = React.useId().replace(/:/g, "");
   const [uid, setUid] = useState(null);
+  const dataRef = useRef(data);
+  useEffect(() => { dataRef.current = data; }, [data]); // 폴링이 항상 "지금 이 순간"의 data를 보게 함
 
   // 내 uid 확보 (인증 기록 조회에 필요)
   useEffect(() => {
@@ -46,13 +48,13 @@ export default function History() {
   // 화면이 안 보일 때는 폴링 멈춤
   useEffect(() => {
     const sync = () => {
-      loadCategoriesFromServer()
+      loadCategoriesFromServer(dataRef.current.categories)
         .then((categories) => update({ categories }))
         .catch((e) => console.error("[History] 알림 목록 조회 실패:", e));
 
       if (uid) {
         loadVerificationsFromServer(uid)
-          .then((verifications) => update({ verifications: { ...data.verifications, ...verifications } }))
+          .then((verifications) => update({ verifications: { ...dataRef.current.verifications, ...verifications } }))
           .catch((e) => console.error("[History] 인증 기록 조회 실패:", e));
       }
     };

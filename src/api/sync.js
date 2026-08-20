@@ -16,7 +16,11 @@ const CATEGORY_ID_BY_BACKEND_TYPE = {
 // ⚠️ id는 매번 새로 만들지 않고 서버 id(serverId)를 그대로 씀 — 안 그러면 새로고침할 때마다
 // 같은 알람인데도 "키"가 바뀌어서, 오늘 이미 인증한 기록이 다시 "대기 중"으로 보이는 버그가 생김.
 // 카테고리 id도 타입별로 고정값 사용(우리 구조상 타입당 카테고리가 하나뿐이라 안전함).
-export async function loadCategoriesFromServer() {
+// ⚠️ existingCategories를 넘기면, 서버엔 없는 "내일부터 적용"(startDate) 정보를
+// 같은 알람(serverId 기준)의 기존 로컬 값에서 그대로 이어받음 — 안 그러면 폴링 돌 때마다 이 정보가 사라져서
+// "오늘 지난 시각은 내일부터" 기능이 45초 안에 무효화되는 버그가 생김
+export async function loadCategoriesFromServer(existingCategories = []) {
+
   const [medications, medAlarms, exerciseAlarms, customAlarms] = await Promise.all([
     getMedications().catch(() => []),
     getMedicationAlarms().catch(() => []),
@@ -24,7 +28,19 @@ export async function loadCategoriesFromServer() {
     getCustomAlarms().catch(() => []),
   ]);
 
-  const toTime = (a) => ({ id: a.id, serverId: a.id, ...fromBackendTime(a.alarmTime) });
+  const existingStartDate = {};
+  existingCategories.forEach((c) => {
+    (c.times || []).forEach((t) => {
+      if (t.serverId && t.startDate) existingStartDate[t.serverId] = t.startDate;
+    });
+  });
+
+  const toTime = (a) => ({
+    id: a.id,
+    serverId: a.id,
+    ...fromBackendTime(a.alarmTime),
+    ...(existingStartDate[a.id] ? { startDate: existingStartDate[a.id] } : {}),
+  });
 
   const categories = [];
 
@@ -60,6 +76,7 @@ export async function loadCategoriesFromServer() {
       times: customAlarms.map((a) => ({ ...toTime(a), title: a.title })),
     });
   }
+
 
   return categories;
 }
