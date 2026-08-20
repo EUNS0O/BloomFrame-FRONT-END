@@ -4,12 +4,16 @@ import { useApp } from "../context/AppContext";
 import { C } from "../styles/tokens";
 import { TopBar } from "../components/common/Layout";
 import { BottomNav } from "../components/common/BottomNav";
+import { isMedicationPlaceholder } from "../api/medications";
 import medicineIconBlack from "../assets/medicine_icon_black.png";
 
 export default function MedList() {
   const navigate = useNavigate();
   const { data, setOnboarding, setWip } = useApp();
-  const meds = data.categories.filter((c) => c.type === "med").flatMap((c) => c.meds);
+  const meds = data.categories
+    .filter((c) => c.type === "med")
+    .flatMap((c) => c.meds)
+    .filter((medication) => !isMedicationPlaceholder(medication));
   const scrollId = React.useId().replace(/:/g, "");
 
   const addMed = () => {
