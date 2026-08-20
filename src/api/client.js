@@ -15,8 +15,10 @@ export function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
 }
 
-async function request(path, { method = "GET", body, auth = true } = {}) {
-  const headers = { "Content-Type": "application/json" };
+async function request(path, { method = "GET", body, auth = true, isFormData = false } = {}) {
+  const headers = {};
+  if (!isFormData) headers["Content-Type"] = "application/json";
+  // FormData는 Content-Type을 직접 안 정함 — 브라우저가 알아서 boundary 포함해서 넣어줘야 정상 동작함
   if (auth) {
     const token = getToken();
     if (token) headers["Authorization"] = `Bearer ${token}`;
@@ -27,7 +29,7 @@ async function request(path, { method = "GET", body, auth = true } = {}) {
     res = await fetch(`${BASE_URL}${path}`, {
       method,
       headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: body !== undefined ? (isFormData ? body : JSON.stringify(body)) : undefined,
     });
   } catch (err) {
     // 네트워크 자체가 안 됐을 때(서버 다운, CORS 막힘 등) — 콘솔에 원인 힌트 남김
@@ -78,6 +80,7 @@ function extractErrorMessage(data) {
 export const api = {
   get: (path, opts) => request(path, { ...opts, method: "GET" }),
   post: (path, body, opts) => request(path, { ...opts, method: "POST", body }),
+  postForm: (path, formData, opts) => request(path, { ...opts, method: "POST", body: formData, isFormData: true }),
   patch: (path, body, opts) => request(path, { ...opts, method: "PATCH", body }),
   delete: (path, opts) => request(path, { ...opts, method: "DELETE" }),
 };

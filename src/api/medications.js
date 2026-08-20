@@ -15,3 +15,9 @@ export async function updateMedication(medicationId, patch) {
 export async function deleteMedication(medicationId) {
   return api.delete(`/api/v1/medications/${medicationId}`);
 }
+
+export async function analyzeMedicationPhoto(medicationId, file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  return api.postForm(`/api/v1/medications/${medicationId}/analyze`, formData);
+}
