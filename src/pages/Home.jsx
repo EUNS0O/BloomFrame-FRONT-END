@@ -4,7 +4,8 @@ import { useApp } from "../context/AppContext";
 import { C } from "../styles/tokens";
 import { getTodaySchedule, getAlarmStatus } from "../utils/alarmStatus";
 import { saveTodayRecord } from "../utils/historyStore";
-import { loadCategoriesFromServer } from "../api/sync";
+import { loadCategoriesFromServer, loadVerificationsFromServer } from "../api/sync";
+import { getMe } from "../api/auth";
 import { TopBar } from "../components/common/Layout";
 import { Card } from "../components/common/Controls";
 import { BottomNav } from "../components/common/BottomNav";
@@ -57,19 +58,60 @@ const LABEL = {
 
 export default function Home() {
   const navigate = useNavigate();
-  const { data, setData, setOnboarding, setWip } = useApp();
+  const { data, setData, update, setOnboarding, setWip } = useApp();
 
   const scrollId = React.useId().replace(/:/g, "");
 
   const [now, setNow] = useState(new Date());
+  const [uid, setUid] = useState(null);
 
-  // 홈 화면 들어올 때마다 서버에서 최신 알림 목록을 다시 받아와서 반영 —
-  // 새로고침하거나 다른 기기에서 등록한 것도 여기서 다시 불러오면 반영됨
+  // 홈 화면 진입 시 내 uid 확보 (인증 로그 조회에 필요)
   useEffect(() => {
-    loadCategoriesFromServer()
-      .then((categories) => setData((d) => ({ ...d, categories })))
-      .catch((e) => console.error("[Home] 알림 목록 조회 실패:", e));
+    getMe()
+      .then((me) => setUid(me.uid))
+      .catch((e) => console.error("[Home] 내 정보 조회 실패:", e));
   }, []);
+
+  // 홈 화면 들어올 때 + 이후 45초마다 서버에서 최신 알림 목록/인증 기록을 다시 받아와서 반영 —
+  // 다른 기기(예: 태블릿)에서 등록/수정/삭제/인증한 것도 이 폴링을 통해 시간차를 두고 반영됨
+  // 화면이 안 보일 때(다른 탭/앱으로 전환, 화면 꺼짐)는 폴링을 완전히 멈춰서 불필요한 서버 요청을 막음
+  useEffect(() => {
+    const sync = () => {
+      loadCategoriesFromServer()
+        .then((categories) => setData((d) => ({ ...d, categories })))
+        .catch((e) => console.error("[Home] 알림 목록 조회 실패:", e));
+
+      if (uid) {
+        loadVerificationsFromServer(uid)
+          .then((verifications) => update({ verifications: { ...data.verifications, ...verifications } }))
+          .catch((e) => console.error("[Home] 인증 기록 조회 실패:", e));
+      }
+    };
+
+    let intervalId = null;
+    const startPolling = () => {
+      if (intervalId) return; // 이미 돌고 있으면 중복 시작 방지
+      sync();
+      intervalId = setInterval(sync, 45 * 1000);
+    };
+    const stopPolling = () => {
+      if (intervalId) clearInterval(intervalId);
+      intervalId = null;
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") startPolling();
+      else stopPolling();
+    };
+
+    if (document.visibilityState === "visible") startPolling();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      stopPolling();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uid]);
 
   // 1분마다 현재 시간을 갱신
   // "대기" → "실패" 상태가 화면에 반영되도록 함

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useApp } from "../context/AppContext";
@@ -9,6 +9,8 @@ import { BottomButton } from "../components/common/BottomButton";
 import { BottomNav } from "../components/common/BottomNav";
 import { getTodaySchedule, getAlarmStatus } from "../utils/alarmStatus";
 import { getRecord } from "../utils/historyStore";
+import { loadCategoriesFromServer, loadVerificationsFromServer } from "../api/sync";
+import { getMe } from "../api/auth";
 import medicineIconGreen from "../assets/medicine_icon_green.webp";
 import medicineIconRed from "../assets/medicine_icon_red.webp";
 import medicineIconSmall from "../assets/medicine_icon_small.webp";
@@ -29,8 +31,57 @@ const today = new Date();
 
 export default function History() {
   const navigate = useNavigate();
-  const { data } = useApp();
+  const { data, update } = useApp();
   const scrollId = React.useId().replace(/:/g, "");
+  const [uid, setUid] = useState(null);
+
+  // 내 uid 확보 (인증 기록 조회에 필요)
+  useEffect(() => {
+    getMe()
+      .then((me) => setUid(me.uid))
+      .catch((e) => console.error("[History] 내 정보 조회 실패:", e));
+  }, []);
+
+  // Home.jsx랑 동일한 패턴 — "오늘" 부분을 실시간으로 보여주는 화면이라 여기도 최신 데이터가 필요함
+  // 화면이 안 보일 때는 폴링 멈춤
+  useEffect(() => {
+    const sync = () => {
+      loadCategoriesFromServer()
+        .then((categories) => update({ categories }))
+        .catch((e) => console.error("[History] 알림 목록 조회 실패:", e));
+
+      if (uid) {
+        loadVerificationsFromServer(uid)
+          .then((verifications) => update({ verifications: { ...data.verifications, ...verifications } }))
+          .catch((e) => console.error("[History] 인증 기록 조회 실패:", e));
+      }
+    };
+
+    let intervalId = null;
+    const startPolling = () => {
+      if (intervalId) return;
+      sync();
+      intervalId = setInterval(sync, 45 * 1000);
+    };
+    const stopPolling = () => {
+      if (intervalId) clearInterval(intervalId);
+      intervalId = null;
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") startPolling();
+      else stopPolling();
+    };
+
+    if (document.visibilityState === "visible") startPolling();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      stopPolling();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uid]);
+
 
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());

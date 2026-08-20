@@ -5,8 +5,7 @@ import { getTodaySchedule, getAlarmStatus } from "../utils/alarmStatus";
 import { getMe } from "../api/auth";
 import { findReminderId, touchAuth } from "../api/reminders";
 import { getLatestNewsletter } from "../api/newsletter";
-import { loadCategoriesFromServer } from "../api/sync";
-
+import { loadCategoriesFromServer, loadVerificationsFromServer } from "../api/sync";
 import bgIdle from "../assets/iot/bg_idle.webp";
 import bgAlarm from "../assets/iot/bg_alarm.webp";
 import bgChange from "../assets/iot/bg_change.mp4";
@@ -147,13 +146,7 @@ export default function IotDisplay() {
     });
   }, []);
 
-  // Home.jsx랑 마찬가지로, IoT 화면도 켜질 때(새로고침 포함)마다 서버에서 최신 알림 목록을 다시 받아옴 —
-  // 안 그러면 localStorage에 남아있는 예전(이미 삭제됐을 수도 있는) 알람으로 계속 스케줄을 계산하게 됨
-  useEffect(() => {
-    loadCategoriesFromServer()
-      .then((categories) => update({ categories }))
-      .catch((e) => console.error("[IotDisplay] 알림 목록 조회 실패:", e));
-  }, []);
+  
 
   const testIn = searchParams.get("testIn");
 
@@ -255,6 +248,44 @@ export default function IotDisplay() {
       .then((me) => setUid(me.uid))
       .catch((e) => console.error("[IotDisplay] 내 정보 조회 실패:", e));
   }, []);
+
+useEffect(() => {
+  const sync = () => {
+    loadCategoriesFromServer()
+      .then((categories) => update({ categories }))
+      .catch((e) => console.error("[IotDisplay] 알림 목록 조회 실패:", e));
+
+    if (uid) {
+      loadVerificationsFromServer(uid)
+        .then((verifications) => update({ verifications: { ...data.verifications, ...verifications } }))
+        .catch((e) => console.error("[IotDisplay] 인증 기록 조회 실패:", e));
+    }
+  };
+
+  let intervalId = null;
+  const startPolling = () => {
+    if (intervalId) return;
+    sync();
+    intervalId = setInterval(sync, 45 * 1000);
+  };
+  const stopPolling = () => {
+    if (intervalId) clearInterval(intervalId);
+    intervalId = null;
+  };
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === "visible") startPolling();
+    else stopPolling();
+  };
+
+  if (document.visibilityState === "visible") startPolling();
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+
+  return () => {
+    stopPolling();
+    document.removeEventListener("visibilitychange", handleVisibilityChange);
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [uid]);
 
   const resolvedKeys = useRef(new Set());
   const outcomes = useRef(new Map());
