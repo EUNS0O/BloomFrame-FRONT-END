@@ -468,13 +468,11 @@ export default function IotDisplay() {
   // 이미 다 preload된 이미지 배열이라 재생 중 네트워크를 아예 안 탐(버퍼링 자체가 불가능한 구조)
   useEffect(() => {
     if (!activeFrames) return;
-    console.log(`[전환 시작] ${transition}, 프레임 개수: ${activeFrames.length}, 간격: ${FRAME_INTERVAL_MS}ms, 예상 총 시간: ${(activeFrames.length * FRAME_INTERVAL_MS / 1000).toFixed(1)}초`);
     setFrameIndex(0);
     const id = setInterval(() => {
       setFrameIndex((i) => {
         if (i + 1 >= activeFrames.length) {
           clearInterval(id);
-          console.log(`[전환 끝] 마지막 프레임(${i + 1}/${activeFrames.length})까지 재생 완료`);
           handleTransitionEnd();
           return i;
         }
@@ -483,7 +481,6 @@ export default function IotDisplay() {
     }, FRAME_INTERVAL_MS);
     return () => {
       clearInterval(id);
-      console.log("[전환 effect 정리됨] — 중간에 재시작됐을 가능성");
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transition]);
