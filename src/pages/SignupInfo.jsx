@@ -5,6 +5,7 @@ import { useApp } from "../context/AppContext";
 import { BackHeader } from "../components/common/BackHeader";
 import { Btn, Field } from "../components/common/Controls";
 import { stripPhone } from "../utils/format";
+import { signup, login, updateMe } from "../api/auth";
 import agreeIcon from "../assets/agree.png";
 import nonAgreeIcon from "../assets/non_agree.png";
 
@@ -16,6 +17,8 @@ export default function SignupInfo() {
   const { data, update, setOnboarding, setWip, accountEditMode, setAccountEditMode } = useApp();
   const [permissionsAgreed, setPermissionsAgreed] = useState(false);
   const [originalGuardianPhone, setOriginalGuardianPhone] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState("");
   const scrollId = React.useId().replace(/:/g, "");
 
   // 회원가입(수정 모드 아님)으로 들어온 거면, 예전 테스트/이전 세션에 남아있던 값 대신 항상 빈 칸으로 시작
@@ -49,27 +52,35 @@ export default function SignupInfo() {
   if (!data.guardianPhone?.trim() || stripPhone(data.guardianPhone).length < 11) errors.push("전화번호(본인)를 정확히 입력해 주세요.");
   if (!verified) errors.push("전화번호(본인) 인증을 완료해 주세요.");
   if (!data.email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())) errors.push("올바른 이메일 형식이 아니에요.");
-  if (!data.password || data.password.length < 4) errors.push("비밀번호는 4자 이상 입력해 주세요.");
+  if (!data.password || data.password.length < 8) errors.push("비밀번호는 8자 이상 입력해 주세요.");
   if (data.password !== data.passwordConfirm) errors.push("비밀번호가 서로 일치하지 않아요.");
   if (!accountEditMode && !permissionsAgreed) errors.push("앱 접근 권한에 동의해 주세요."); // 수정 모드에선 재동의 요구 안 함
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (errors.length > 0) return; // 버튼이 disabled라 사실상 여기 안 오지만, 방어적으로 한 번 더 막음
-
-    // 실제 백엔드 연동 시 이 payload를 그대로 API에 보내면 됨 (전화번호는 하이픈 없이 숫자만 — 이미 입력 단계에서 숫자만 받으므로 stripPhone은 방어적 처리)
-    const payload = {
-      ...data,
-      guardianPhone: stripPhone(data.guardianPhone),
-      selfPhone: stripPhone(data.selfPhone),
-    };
-    // TODO: 백엔드 연동 시 여기서 payload로 회원가입/수정 API 호출
-    console.log("[백엔드로 넘길 payload]", payload);
-
-    if (accountEditMode) {
-      setAccountEditMode(false);
-      navigate("/mypage"); // 온보딩으로 새지 않고 마이페이지로 복귀
-    } else {
-      startOnboardingCategoryFlow();
+    setApiError("");
+    setLoading(true);
+    try {
+      if (accountEditMode) {
+        await updateMe({ name: data.name, guardianPhone: data.guardianPhone, selfPhone: data.selfPhone });
+        setAccountEditMode(false);
+        navigate("/mypage"); // 온보딩으로 새지 않고 마이페이지로 복귀
+      } else {
+        await signup({
+          name: data.name,
+          guardianPhone: data.guardianPhone,
+          selfPhone: data.selfPhone,
+          email: data.email,
+          password: data.password,
+        });
+        // 명세에 회원가입 응답에 토큰이 있는지 안 나와있어서, 안전하게 가입 직후 로그인을 한 번 더 호출함
+        await login({ email: data.email, password: data.password });
+        startOnboardingCategoryFlow();
+      }
+    } catch (e) {
+      setApiError(e.message || "요청 처리 중 문제가 생겼어요.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -184,11 +195,12 @@ export default function SignupInfo() {
           </div>
         )}
 
-        {errors.length > 0 && (
+        {(errors.length > 0 || apiError) && (
           <div style={{ border: "1px solid #E5484D", borderRadius: 6, padding: "12px 14px", marginBottom: 20 }}>
             {errors.map((e, i) => (
               <div key={i} style={{ fontSize: 12.5, color: "#B92020", lineHeight: 1.6 }}>· {e}</div>
             ))}
+            {apiError && <div style={{ fontSize: 12.5, color: "#B92020", lineHeight: 1.6 }}>· {apiError}</div>}
           </div>
         )}
       </div>
@@ -196,7 +208,7 @@ export default function SignupInfo() {
       {/* 확인 버튼 — 스크롤 영역 밖, 불투명한 고정 자리 */}
       <div style={{ padding: "14px 32px 55px", background: C.bg, flexShrink: 0, display: "flex", justifyContent: "center" }}>
         <div style={{ width: 170 }}>
-          <Btn disabled={errors.length > 0} onClick={handleConfirm} padding="10px 14px">확인</Btn>
+          <Btn disabled={errors.length > 0 || loading} onClick={handleConfirm} padding="10px 14px">{loading ? "처리 중..." : "확인"}</Btn>
         </div>
       </div>
     </div>
