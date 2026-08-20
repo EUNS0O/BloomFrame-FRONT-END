@@ -28,6 +28,14 @@ BloomFrame+는 약 복용, 운동, 사용자 지정 일정처럼 매일 반복�
 
 알림을 제시간에 수행하면 시든 꽃이 다시 피어나는 시각적 피드백을 제공해, 건강 관리를 단순한 체크리스트가 아닌 지속 가능한 경험으로 만듭니다.
 
+### 생활 속 BloomFrame+
+
+<div align="center">
+  <img src="docs/images/bloomframe-in-living-space.png" alt="생활 공간에 설치된 BloomFrame+ IoT 디스플레이" width="720" />
+  <br />
+  <sub>일상 공간에 자연스럽게 스며드는 디지털 액자형 건강 습관 도우미</sub>
+</div>
+
 ## 서비스 미리보기
 
 ### 모바일 앱
