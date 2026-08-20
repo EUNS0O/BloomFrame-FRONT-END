@@ -6,6 +6,7 @@ import { nextId } from "../utils/format";
 import { BackHeader } from "../components/common/BackHeader";
 import { Btn, Field } from "../components/common/Controls";
 import { BottomButton } from "../components/common/BottomButton";
+import { createMedication, updateMedication } from "../api/medications";
 
 export default function MedEdit() {
   const navigate = useNavigate();
@@ -18,19 +19,39 @@ export default function MedEdit() {
   const [name, setName] = useState(editingMed?.name || "");
   const [freq, setFreq] = useState(editingMed?.freq || "");
   const [timing, setTiming] = useState(editingMed?.timing || "");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleConfirm = () => {
-    if (!name.trim()) return;
-    setWip((w) => {
-      if (w.editingMedId) {
-        return {
+  const handleConfirm = async () => {
+    if (!name.trim() || submitting) return;
+    setSubmitting(true);
+    setError("");
+
+    const dosePerDay = Number(freq || "1");
+
+    try {
+      if (wip.editingMedId && editingMed?.serverId) {
+        await updateMedication(editingMed.serverId, { name, dosePerDay, timing, imageUrl: null });
+      } else {
+        const res = await createMedication({ name, dosePerDay, timing, imageUrl: null });
+        setWip((w) => ({
           ...w,
-          meds: w.meds.map((m) => (m.id === w.editingMedId ? { ...m, name, freq: freq || "1", timing } : m)),
-          editingMedId: null,
-        };
+          meds: [...w.meds, { id: nextId(), serverId: res?.id, name, freq: freq || "1", timing, times: [] }],
+        }));
+        navigate("/onboarding/med-info");
+        return;
       }
-      return { ...w, meds: [...w.meds, { id: nextId(), name, freq: freq || "1", timing }] };
-    });
+    } catch (e) {
+      setError(e.message || "약 정보 저장에 실패했어요.");
+      setSubmitting(false);
+      return;
+    }
+
+    setWip((w) => ({
+      ...w,
+      meds: w.meds.map((m) => (m.id === w.editingMedId ? { ...m, name, freq: freq || "1", timing } : m)),
+      editingMedId: null,
+    }));
     navigate("/onboarding/med-info");
   };
 
@@ -58,8 +79,14 @@ export default function MedEdit() {
         bg={C.bg} marginBottom={30} placeholderColor={C.gray}
       />
 
+      {error && (
+        <div style={{ fontSize: 12.5, color: "#E5484D", marginBottom: 20, paddingLeft: 12 }}>{error}</div>
+      )}
+
       <BottomButton>
-        <Btn onClick={handleConfirm} disabled={!name.trim()} padding="10px 14px">확인</Btn>
+        <Btn onClick={handleConfirm} disabled={!name.trim() || submitting} padding="10px 14px">
+          {submitting ? "저장 중..." : "확인"}
+        </Btn>
       </BottomButton>
     </div>
   );

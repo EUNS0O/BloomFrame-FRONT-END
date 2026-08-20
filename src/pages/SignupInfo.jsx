@@ -5,7 +5,7 @@ import { useApp } from "../context/AppContext";
 import { BackHeader } from "../components/common/BackHeader";
 import { Btn, Field } from "../components/common/Controls";
 import { stripPhone } from "../utils/format";
-import { signup, login, updateMe } from "../api/auth";
+import { signup, login, updateMe, sendCode, verifyCode } from "../api/auth";
 import agreeIcon from "../assets/agree.png";
 import nonAgreeIcon from "../assets/non_agree.png";
 
@@ -19,6 +19,10 @@ export default function SignupInfo() {
   const [originalGuardianPhone, setOriginalGuardianPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState("");
+  const [phoneVerified, setPhoneVerified] = useState(false); // 실제로 백엔드 인증까지 성공했는지
+  const [sendingCode, setSendingCode] = useState(false);
+  const [verifyingCode, setVerifyingCode] = useState(false);
+  const [phoneError, setPhoneError] = useState("");
   const scrollId = React.useId().replace(/:/g, "");
 
   // 회원가입(수정 모드 아님)으로 들어온 거면, 예전 테스트/이전 세션에 남아있던 값 대신 항상 빈 칸으로 시작
@@ -39,10 +43,56 @@ export default function SignupInfo() {
   const phoneChanged = data.guardianPhone !== originalGuardianPhone;
   const showPhoneVerifyButton = isPhoneComplete && phoneChanged && !data.phoneVerifying;
 
-  // 인증 코드 6자리를 입력하면 인증 완료로 간주 (지금은 실제 SMS 검증 서버가 없어서 자리수만 확인 — 나중에 백엔드 연동 시 실제 검증 응답으로 교체)
-  const otpComplete = (data.otp || "").trim().length >= 6;
+  // 번호가 바뀌면 이전 인증은 무효 — 다시 인증해야 함
+  useEffect(() => {
+    setPhoneVerified(false);
+    setPhoneError("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.guardianPhone]);
+
   const verificationRequired = isPhoneComplete && phoneChanged; // 번호를 새로 입력/변경했을 때만 인증이 필요
-  const verified = !verificationRequired || otpComplete;
+  const verified = !verificationRequired || phoneVerified;
+
+  const [devCode, setDevCode] = useState(""); // 백엔드가 테스트용으로 같이 보내주는 인증번호 (실서비스 땐 자동으로 안 옴)
+
+  const handleSendCode = async () => {
+    setPhoneError("");
+    setDevCode("");
+    setSendingCode(true);
+    try {
+      const res = await sendCode(data.guardianPhone);
+      // 백엔드가 테스트용 인증번호를 같이 보내주면(verificationCode 필드) 화면에 표시 — 실서비스 전환 후엔 이 필드가 안 와서 자동으로 안 뜸
+      if (res?.verificationCode) setDevCode(String(res.verificationCode));
+      update({ phoneVerifying: true, otp: "" });
+    } catch (e) {
+      setPhoneError(e.message || "인증번호 발송에 실패했어요.");
+    } finally {
+      setSendingCode(false);
+    }
+  };
+
+  const handleVerifyCode = async (code) => {
+    setPhoneError("");
+    setVerifyingCode(true);
+    try {
+      await verifyCode(data.guardianPhone, code);
+      setPhoneVerified(true);
+    } catch (e) {
+      setPhoneError(e.message || "인증번호가 올바르지 않아요.");
+      setPhoneVerified(false);
+    } finally {
+      setVerifyingCode(false);
+    }
+  };
+
+  // 인증번호 6자리를 다 입력하면 자동으로 서버에 검증 요청
+  useEffect(() => {
+    const code = (data.otp || "").trim();
+    if (data.phoneVerifying && code.length === 6 && !phoneVerified && !verifyingCode) {
+      handleVerifyCode(code);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.otp]);
 
   // 매 렌더마다 다시 계산 — 값이 바뀌는 즉시 버튼 활성/비활성이 바로 반영됨
   const errors = [];
@@ -62,12 +112,13 @@ export default function SignupInfo() {
     setLoading(true);
     try {
       if (accountEditMode) {
-        await updateMe({ name: data.name, guardianPhone: data.guardianPhone, selfPhone: data.selfPhone });
+        await updateMe({ name: data.name, age: data.age, guardianPhone: data.guardianPhone, selfPhone: data.selfPhone });
         setAccountEditMode(false);
         navigate("/mypage"); // 온보딩으로 새지 않고 마이페이지로 복귀
       } else {
         await signup({
           name: data.name,
+          age: data.age,
           guardianPhone: data.guardianPhone,
           selfPhone: data.selfPhone,
           email: data.email,
@@ -154,24 +205,32 @@ export default function SignupInfo() {
 
         {showPhoneVerifyButton && (
           <button
-            onClick={() => update({ phoneVerifying: true })}
-            style={{ display: "block", width: "95%", margin: "0 auto", padding: "6px 13px", borderRadius: 6, border: "none", background: C.black, color: "#fff", fontSize: 13.5, fontWeight: 700, marginBottom: FIELD_MB, cursor: "pointer" }}
+            onClick={handleSendCode}
+            disabled={sendingCode}
+            style={{ display: "block", width: "95%", margin: "0 auto", padding: "6px 13px", borderRadius: 6, border: "none", background: C.black, color: "#fff", fontSize: 13.5, fontWeight: 700, marginBottom: FIELD_MB, cursor: sendingCode ? "default" : "pointer", opacity: sendingCode ? 0.6 : 1 }}
           >
-            휴대폰 번호 인증하기
+            {sendingCode ? "발송 중..." : "휴대폰 번호 인증하기"}
           </button>
         )}
         {data.phoneVerifying && (
           <div style={{ width: "95%", margin: "0 auto", marginBottom: FIELD_MB }}>
+            {devCode && (
+              <div style={{ fontSize: 12, color: "#FE731C", fontWeight: 700, marginBottom: 6 }}>
+                (테스트용) 인증번호: {devCode}
+              </div>
+            )}
             <input
               placeholder="문자로 전송된 인증번호를 입력해 주세요" value={data.otp} onChange={(e) => update({ otp: e.target.value.replace(/[^0-9]/g, "") })}
               style={{
                 display: "block", width: "100%", boxSizing: "border-box", padding: "6px 13px", borderRadius: 6,
-                border: `1px solid ${otpComplete ? C.grayLine : C.grayLine}`,
-                background: otpComplete ? C.grayLine : C.bg,
+                border: `1px solid ${C.grayLine}`,
+                background: phoneVerified ? C.grayLine : C.bg,
                 fontSize: 13, color: C.black, outline: "none",
               }}
             />
-            {otpComplete && (
+            {verifyingCode && <div style={{ fontSize: 12, color: C.gray, marginTop: 6 }}>확인 중...</div>}
+            {phoneError && <div style={{ fontSize: 12, color: "#E5484D", marginTop: 6 }}>{phoneError}</div>}
+            {phoneVerified && (
               <div style={{ fontSize: 12, color: "#3CAE6B", fontWeight: 700, marginTop: 6 }}>✓ 인증 완료</div>
             )}
           </div>

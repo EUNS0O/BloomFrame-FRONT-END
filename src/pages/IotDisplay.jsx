@@ -1,7 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useApp } from "../context/AppContext";
-import { getTodaySchedule } from "../utils/alarmStatus";
+import { getTodaySchedule, getAlarmStatus } from "../utils/alarmStatus";
+import { getMe } from "../api/auth";
+import { findReminderId, touchAuth } from "../api/reminders";
+import { getLatestNewsletter } from "../api/newsletter";
+import { loadCategoriesFromServer } from "../api/sync";
 
 import bgIdle from "../assets/iot/bg_idle.webp";
 import bgAlarm from "../assets/iot/bg_alarm.webp";
@@ -14,6 +18,9 @@ import medicineRed from "../assets/iot/medicine_red.png";
 import gymBlue from "../assets/iot/gym_blue.png";
 import gymGreen from "../assets/iot/gym_green.png";
 import gymRed from "../assets/iot/gym_red.png";
+import clockGray from "../assets/iot/clock_gray.png";
+import clockGreen from "../assets/iot/clock_green.png";
+import clockRed from "../assets/iot/clock_red.png";
 
 // 식물 전환 애니메이션 — 영상 대신 프레임(webp) 연속 재생 방식
 // (영상 버퍼링/디코딩 지연으로 인한 깜빡임을 원천 차단하기 위해, 미리 다 불러온 뒤 이미지만 빠르게 바꿔치기함)
@@ -50,9 +57,9 @@ const CARD_ICON = {
     missed: gymRed,
   },
   other: {
-    pending: medicineYellow,
-    success: medicineGreen,
-    missed: medicineRed,
+    pending: clockGray,
+    success: clockGreen,
+    missed: clockRed,
   },
 };
 
@@ -104,7 +111,7 @@ const MOCK_NEWSLETTER = `안녕하세요 김인하님!
 
 const STAGE1_MS = 3 * 60 * 1000;
 const STAGE2_MS = 10 * 60 * 1000;
-const PRE_ALARM_MS = 5 * 60 * 1000;
+const PRE_ALARM_MS = 10 * 1000; // 알람 10초 전부터 배경 미리 전환
 
 // 배경이 알림 시각보다 몇 분 일찍 바뀔지
 // 기본 5분 전
@@ -140,6 +147,14 @@ export default function IotDisplay() {
     });
   }, []);
 
+  // Home.jsx랑 마찬가지로, IoT 화면도 켜질 때(새로고침 포함)마다 서버에서 최신 알림 목록을 다시 받아옴 —
+  // 안 그러면 localStorage에 남아있는 예전(이미 삭제됐을 수도 있는) 알람으로 계속 스케줄을 계산하게 됨
+  useEffect(() => {
+    loadCategoriesFromServer()
+      .then((categories) => update({ categories }))
+      .catch((e) => console.error("[IotDisplay] 알림 목록 조회 실패:", e));
+  }, []);
+
   const testIn = searchParams.get("testIn");
 
   const cardsTest = searchParams.get("cardsTest") === "1";
@@ -155,7 +170,7 @@ export default function IotDisplay() {
       : STAGE2_MS;
 
   const preAlarmMs =
-    Number(searchParams.get("preAlarm")) >= 0
+    searchParams.get("preAlarm") !== null && Number(searchParams.get("preAlarm")) >= 0
       ? Number(searchParams.get("preAlarm")) * 1000
       : PRE_ALARM_MS;
 
@@ -230,10 +245,33 @@ export default function IotDisplay() {
   // 알림 정각보다 preAlarmMs만큼 일찍 켜짐
 
   const [showNewsletter, setShowNewsletter] = useState(false);
+  const [newsletterContent, setNewsletterContent] = useState(null); // 실제 서버에서 받아온 뉴스레터 (없으면 안내 문구로 대체)
+  const [uid, setUid] = useState(null);
+  const [verifying, setVerifying] = useState(false);
+
+  // 태블릿(IoT 화면)은 마이페이지를 거쳐서 들어오는 게 아닐 수도 있어서, 여기서 따로 내 uid를 받아둠
+  useEffect(() => {
+    getMe()
+      .then((me) => setUid(me.uid))
+      .catch((e) => console.error("[IotDisplay] 내 정보 조회 실패:", e));
+  }, []);
 
   const resolvedKeys = useRef(new Set());
   const outcomes = useRef(new Map());
   const wasAlarmWindow = useRef(false);
+
+  const isTestMode = testIn != null || cardsTest;
+
+  // 실제 알람은 새로고침해도 안 잊어버리게, 매번 data.verifications + 지금 시각으로 다시 판정함
+  // (테스트 모드는 verifications를 안 건드리는 가짜 키라 기존처럼 ref 기반 시뮬레이션 유지)
+  const resolveEntry = (entry, nowMs) => {
+    if (isTestMode) {
+      return resolvedKeys.current.has(entry.key)
+        ? outcomes.current.get(entry.key)
+        : "pending";
+    }
+    return getAlarmStatus(entry, data.verifications, new Date(nowMs));
+  };
 
   // cardsTest 모드:
   // "이미 지난" 카드 2개는 성공/실패 결과를 미리 심어둠
@@ -258,7 +296,7 @@ export default function IotDisplay() {
       // stage2Ms 끝날 때까지 "임박" 상태
       const bgCurrent = schedule.find(
         (s) =>
-          !resolvedKeys.current.has(s.key) &&
+          resolveEntry(s, nowMs) === "pending" &&
           nowMs >= s.at.getTime() - preAlarmMs &&
           nowMs < s.at.getTime() + stage2Ms
       );
@@ -268,7 +306,7 @@ export default function IotDisplay() {
       // 꽃 시듦/카드 카운트다운은 기존대로 알림 "정각"부터 시작
       const current = schedule.find(
         (s) =>
-          !resolvedKeys.current.has(s.key) &&
+          resolveEntry(s, nowMs) === "pending" &&
           nowMs >= s.at.getTime() &&
           nowMs < s.at.getTime() + stage2Ms
       );
@@ -295,8 +333,12 @@ export default function IotDisplay() {
         });
 
         if (elapsed >= stage2Ms) {
-          resolvedKeys.current.add(current.key);
-          outcomes.current.set(current.key, "missed");
+          // 실제 알람은 시간이 지나면 getAlarmStatus가 자동으로 "missed"를 계산해주니 ref에 안 남겨도 됨.
+          // 테스트 모드만 ref에 기록해서 시뮬레이션 유지.
+          if (isTestMode) {
+            resolvedKeys.current.add(current.key);
+            outcomes.current.set(current.key, "missed");
+          }
 
           setAlarmPhase(null);
           setActiveAlarmKey(null);
@@ -339,10 +381,33 @@ export default function IotDisplay() {
     setTransition(null);
   };
 
-  const handleVerify = () => {
-    if (showNewsletter) return;
+  const handleVerify = async () => {
+    if (showNewsletter || verifying) return;
 
     if (!activeAlarmKey) return;
+
+    // 테스트 모드(testIn/cardsTest)의 가짜 알람은 실제 서버 인증 API를 호출하지 않고 로컬에서만 처리
+    const isTestAlarm = testIn || cardsTest || activeAlarmKey.startsWith("test-");
+
+    if (!isTestAlarm) {
+      setVerifying(true);
+      try {
+        const entry = schedule.find((s) => s.key === activeAlarmKey);
+        const reminderId = entry ? await findReminderId(entry.serverId, entry.label) : null;
+
+        if (!reminderId) {
+          // 서버에 아직 이 시간에 대한 리마인더가 안 만들어졌거나(스케줄러 타이밍), 매칭 실패
+          console.warn("[IotDisplay] 이 알람에 해당하는 reminderId를 서버에서 못 찾았어요.", entry);
+        } else {
+          await touchAuth(reminderId);
+        }
+      } catch (e) {
+        console.error("[IotDisplay] 인증 실패:", e);
+        setVerifying(false);
+        return; // 서버 인증 실패했으면 로컬 상태도 "성공"으로 넘기지 않음
+      }
+      setVerifying(false);
+    }
 
     resolvedKeys.current.add(activeAlarmKey);
     outcomes.current.set(activeAlarmKey, "success");
@@ -363,6 +428,13 @@ export default function IotDisplay() {
 
     if (plantState === "WILTED") {
       setTransition("toBloom");
+    }
+
+    // 실제 최신 뉴스레터를 받아와서 보여줌 (실패하면 null로 남아서, 화면에서 안내 문구로 대체됨)
+    if (uid && !isTestAlarm) {
+      getLatestNewsletter(uid)
+        .then(setNewsletterContent)
+        .catch((e) => console.error("[IotDisplay] 뉴스레터 조회 실패:", e));
     }
 
     setShowNewsletter(true);
@@ -407,18 +479,17 @@ export default function IotDisplay() {
         return i + 1;
       });
     }, FRAME_INTERVAL_MS);
-    return () => clearInterval(id);
+    return () => {
+      clearInterval(id);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transition]);
 
   const { md, day } = formatDate(now);
 
   const cards = schedule.map((s) => {
-    const isResolved = resolvedKeys.current.has(s.key);
-
-    const outcome = isResolved
-      ? outcomes.current.get(s.key)
-      : "pending";
+    const outcome = resolveEntry(s, now.getTime());
+    const isResolved = outcome !== "pending";
 
     // "pending" | "success" | "missed"
     const status = isResolved
@@ -436,9 +507,11 @@ export default function IotDisplay() {
     let subtext = null;
     let subtextColor = "#9A9993";
 
+    // 카드 카운트다운은 각자 자기 시각 기준으로 독립적으로 뜸 (식물 상태만 activeAlarmKey 하나에 묶임)
     const isActiveAlarm =
       !isResolved &&
-      s.key === activeAlarmKey;
+      now.getTime() >= s.at.getTime() &&
+      now.getTime() < s.at.getTime() + stage2Ms;
 
     if (isActiveAlarm) {
       // 알림 시각부터 경과된 시간을
@@ -776,10 +849,14 @@ export default function IotDisplay() {
               fontWeight: 500,
             }}
           >
-            {MOCK_NEWSLETTER}
+            {newsletterContent
+              ? `${newsletterContent.title || ""}\n\n${newsletterContent.body || ""}${
+                  newsletterContent.tips?.length ? "\n\n" + newsletterContent.tips.map((t) => `· ${t}`).join("\n") : ""
+                }`
+              : MOCK_NEWSLETTER}
 
             <button
-              onClick={() => setShowNewsletter(false)}
+              onClick={() => { setShowNewsletter(false); setNewsletterContent(null); }}
               style={{
                 position: "absolute",
                 right: 36,
