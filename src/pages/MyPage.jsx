@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import { C } from "../styles/tokens";
 import { nextId } from "../utils/format";
+import { getMe } from "../api/auth";
 import { TopBar } from "../components/common/Layout";
 import { Card } from "../components/common/Controls";
 import { BottomNav } from "../components/common/BottomNav";
@@ -23,6 +24,15 @@ export default function MyPage() {
   const navigate = useNavigate();
   const { data, update, setWip, setImageOnly, setAccountEditMode, resetAll } = useApp();
   const scrollId = React.useId().replace(/:/g, "");
+
+  // 마이페이지 들어올 때마다 서버에서 최신 계정 정보를 다시 받아옴 (다른 기기에서 수정했을 수도 있으니)
+  useEffect(() => {
+    getMe()
+      .then((me) => update(me))
+      .catch((e) => console.error("[MyPage] 계정 정보 조회 실패:", e));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   const editAccount = () => {
     setAccountEditMode(true);
@@ -59,16 +69,16 @@ export default function MyPage() {
 
         <div className={`mypage-scroll-${scrollId}`} style={{ flex: 1, overflowY: "auto", padding: "0 35px 0px" }}>
           <div style={{ background: C.black, color: "#fff", borderRadius: 9, padding: "27px 19px", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 34 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 50, height: 50, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0, flex: 1 }}>
+              <div style={{ width: 50, height: 50, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 <img src={cloverOrange} alt="" style={{ width: 50, height: 50 }} />
               </div>
-              <div>
-                <div style={{ fontWeight: 300, fontSize: 18 }}>계정 · {data.email || "example.com"}</div>
-                <div style={{ fontSize: 12, color: "#C9C7C2" }}>{data.name || "홍길동"} {data.selfPhone || "010-0000-0000"}</div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontWeight: 300, fontSize: 18, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>계정 · {data.email || "example.com"}</div>
+                <div style={{ fontSize: 12, color: "#C9C7C2", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{data.name || "홍길동"} {data.selfPhone || "010-0000-0000"}</div>
               </div>
             </div>
-            <button style={editBtnStyle} onClick={editAccount}>수정</button>
+            <button style={{ ...editBtnStyle, flexShrink: 0, marginLeft: 8 }} onClick={editAccount}>수정</button>
           </div>
 
           <div style={{ fontSize: 20, fontWeight: 700, color: C.black, marginBottom: 10 }}>복용약 정보</div>

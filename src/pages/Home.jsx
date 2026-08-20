@@ -4,6 +4,7 @@ import { useApp } from "../context/AppContext";
 import { C } from "../styles/tokens";
 import { getTodaySchedule, getAlarmStatus } from "../utils/alarmStatus";
 import { saveTodayRecord } from "../utils/historyStore";
+import { loadCategoriesFromServer } from "../api/sync";
 import { TopBar } from "../components/common/Layout";
 import { Card } from "../components/common/Controls";
 import { BottomNav } from "../components/common/BottomNav";
@@ -56,11 +57,19 @@ const LABEL = {
 
 export default function Home() {
   const navigate = useNavigate();
-  const { data, setOnboarding, setWip } = useApp();
+  const { data, setData, setOnboarding, setWip } = useApp();
 
   const scrollId = React.useId().replace(/:/g, "");
 
   const [now, setNow] = useState(new Date());
+
+  // 홈 화면 들어올 때마다 서버에서 최신 알림 목록을 다시 받아와서 반영 —
+  // 새로고침하거나 다른 기기에서 등록한 것도 여기서 다시 불러오면 반영됨
+  useEffect(() => {
+    loadCategoriesFromServer()
+      .then((categories) => setData((d) => ({ ...d, categories })))
+      .catch((e) => console.error("[Home] 알림 목록 조회 실패:", e));
+  }, []);
 
   // 1분마다 현재 시간을 갱신
   // "대기" → "실패" 상태가 화면에 반영되도록 함

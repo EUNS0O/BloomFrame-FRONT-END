@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 import { C } from "../styles/tokens";
@@ -6,6 +6,7 @@ import { fmtTime } from "../utils/format";
 import { TopBar } from "../components/common/Layout";
 import { Btn } from "../components/common/Controls";
 import { BottomNav } from "../components/common/BottomNav";
+import { deleteMedicationAlarm, deleteExerciseAlarm, deleteCustomAlarm } from "../api/alarms";
 
 import medicineIconWhiteSmall from "../assets/medicine_icon_white_small.png";
 import gymIconWhiteSmall from "../assets/gym_icon_white_small.png";
@@ -23,6 +24,12 @@ const LABEL = {
   other: "기타",
 };
 
+const DELETE_FN = {
+  med: deleteMedicationAlarm,
+  exercise: deleteExerciseAlarm,
+  other: deleteCustomAlarm,
+};
+
 export default function AlarmList() {
   const navigate = useNavigate();
 
@@ -34,20 +41,35 @@ export default function AlarmList() {
   } = useApp();
 
   const scrollId = React.useId().replace(/:/g, "");
+  const [deletingKey, setDeletingKey] = useState(null);
 
   /*
-   * 알람 삭제
+   * 알람 삭제 — 서버에 실제로 지운 뒤에 로컬 목록에서도 지움
    */
-  const removeTime = (categoryId, timeId) => {
+  const removeTime = async (category, time, key) => {
+    if (deletingKey) return;
+
+    if (time.serverId) {
+      setDeletingKey(key);
+      try {
+        await DELETE_FN[category.type](time.serverId);
+      } catch (e) {
+        alert(e.message || "삭제에 실패했어요.");
+        setDeletingKey(null);
+        return;
+      }
+      setDeletingKey(null);
+    }
+
     setData((d) => ({
       ...d,
 
       categories: d.categories.map((cc) =>
-        cc.id === categoryId
+        cc.id === category.id
           ? {
               ...cc,
               times: cc.times.filter(
-                (x) => x.id !== timeId
+                (x) => x.id !== time.id
               ),
             }
           : cc
@@ -114,10 +136,6 @@ export default function AlarmList() {
    * 따라서 startDate가 내일인 알람도
    * "등록된 알람"이므로 목록에 표시됨.
    */
-  console.log(
-  "현재 categories:",
-  JSON.stringify(data.categories, null, 2)
-);
   const allAlarms = data.categories.flatMap((category) =>
     category.times.map((time) => ({
       key: `${category.id}-${time.id}`,
@@ -273,11 +291,12 @@ export default function AlarmList() {
 
                 <button
                   onClick={() =>
-                    removeTime(category.id, time.id)
+                    removeTime(category, time, key)
                   }
-                  style={btnStyle}
+                  disabled={deletingKey === key}
+                  style={{ ...btnStyle, opacity: deletingKey === key ? 0.5 : 1 }}
                 >
-                  삭제
+                  {deletingKey === key ? "삭제 중..." : "삭제"}
                 </button>
               </div>
             </div>
