@@ -1,6 +1,7 @@
 import { getMedications } from "./medications";
 import { getMedicationAlarms, getExerciseAlarms, getCustomAlarms } from "./alarms";
 import { getTodayAuthLogs } from "./authLogs";
+import { getReminders } from "./reminders";
 import { fromBackendTime } from "../utils/format";
 
 const CATEGORY_ID_BY_BACKEND_TYPE = {
@@ -8,6 +9,27 @@ const CATEGORY_ID_BY_BACKEND_TYPE = {
   EXERCISE: "cat-exercise",
   CUSTOM: "cat-other",
 };
+
+const REMINDER_CACHE_TTL_MS = 30 * 1000;
+let reminderTargetCache = new Map();
+let reminderCacheLoadedAt = 0;
+
+async function loadReminderTargetMap(force = false) {
+  const cacheIsFresh =
+    reminderTargetCache.size > 0 &&
+    Date.now() - reminderCacheLoadedAt < REMINDER_CACHE_TTL_MS;
+
+  if (!force && cacheIsFresh) return reminderTargetCache;
+
+  const reminders = await getReminders();
+  reminderTargetCache = new Map(
+    (Array.isArray(reminders) ? reminders : [])
+      .filter((reminder) => reminder?.id && reminder?.targetId)
+      .map((reminder) => [String(reminder.id), String(reminder.targetId)])
+  );
+  reminderCacheLoadedAt = Date.now();
+  return reminderTargetCache;
+}
 
 
 export async function loadCategoriesFromServer(existingCategories = []) {
@@ -87,12 +109,40 @@ export async function loadCategoriesFromServer(existingCategories = []) {
 export async function loadVerificationsFromServer(uid) {
   if (!uid) return {};
   const logs = await getTodayAuthLogs(uid);
+  const relevantLogs = (Array.isArray(logs) ? logs : []).filter(
+    (log) => log.status === "SUCCESS" || log.status === "MISSED"
+  );
+
+  let reminderTargets = await loadReminderTargetMap();
+
+  // 인증 로그의 targetId는 알람 ID가 아니라 reminder 문서 ID다.
+  // 막 생성된 reminder가 캐시에 없으면 목록을 한 번만 즉시 갱신한다.
+  if (
+    relevantLogs.some(
+      (log) => log.targetId && !reminderTargets.has(String(log.targetId))
+    )
+  ) {
+    reminderTargets = await loadReminderTargetMap(true);
+  }
+
   const verifications = {};
-  (Array.isArray(logs) ? logs : []).forEach((log) => {
-    if (log.status !== "SUCCESS") return;
+  relevantLogs.forEach((log) => {
     const categoryId = CATEGORY_ID_BY_BACKEND_TYPE[log.type];
     if (!categoryId) return;
-    verifications[`${categoryId}-${log.targetId}`] = "success";
+
+    const alarmId =
+      log.alarmId ||
+      log.originalTargetId ||
+      reminderTargets.get(String(log.targetId));
+    if (!alarmId) return;
+
+    const key = `${categoryId}-${alarmId}`;
+    const status = log.status === "SUCCESS" ? "success" : "missed";
+
+    // 같은 알람에 복수 로그가 있더라도 성공 기록을 우선한다.
+    if (verifications[key] !== "success") {
+      verifications[key] = status;
+    }
   });
   return verifications;
 }

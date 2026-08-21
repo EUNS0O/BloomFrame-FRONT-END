@@ -82,6 +82,10 @@ export function getAlarmStatus(entry, verifications, now = new Date()) {
     return "success";
   }
 
+  if (verifications?.[entry.key] === "missed") {
+    return "missed";
+  }
+
   if (now.getTime() < entry.at.getTime() + STAGE2_MS) {
     return "pending";
   }
